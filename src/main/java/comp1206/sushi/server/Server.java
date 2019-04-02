@@ -35,9 +35,12 @@ public class Server implements ServerInterface {
         
         configuration = new Configuration(this);
         
+        //Default configuration, if not initialised it can cause null pointer exception in ServerWindo (title set up) - but we are not allowed to edit this
 		Postcode restaurantPostcode = new Postcode("SO17 1BJ");
-		restaurant = new Restaurant("Mock Restaurant",restaurantPostcode);
+		restaurant = new Restaurant("Sushi Restaurant",restaurantPostcode);
 		
+
+		/**
 		Postcode postcode1 = addPostcode("SO17 1TJ");
 		Postcode postcode2 = addPostcode("SO17 1BX");
 		Postcode postcode3 = addPostcode("SO17 2NJ");
@@ -72,6 +75,7 @@ public class Server implements ServerInterface {
 		addDrone(1);
 		addDrone(2);
 		addDrone(3);
+		**/
 	}
 	
 	@Override
@@ -301,6 +305,8 @@ public class Server implements ServerInterface {
 	public void loadConfiguration(String filename) {
 		System.out.println("Loaded configuration: " + filename);
 		configuration.loadConfiguration(filename);
+		restaurant = new Restaurant("Joes restaurant",new Postcode("SO17 1AW"));
+		this.notifyUpdate();
 	}
 
 	@Override
@@ -419,6 +425,41 @@ public class Server implements ServerInterface {
 	public Restaurant getRestaurant() {
 		return restaurant;
 	}
+	
+	/**
+	 * Gives a reference to {@link Logger object}
+	 * @return Logger object used by the server
+	 */
+	public Logger getLogger() {
+		return logger;
+	}
+	
+	/**
+	 * Returns a reference to a {@link Postcode} object for given String
+	 * @param postcode String to be searched
+	 * @return reference to {@link Postcode} object with a given name, null when not found
+	 */
+	public Postcode getPostcode(String postcode) {
+		for(Postcode p : postcodes) {
+			if(p.getName().equals(postcode)) {
+				return p;
+			}
+		}
+		return null;
+	}
 
+	/**
+	 * Returns a reference to a {@link Supplier} object for given String
+	 * @param postcode String to be searched
+	 * @return reference to {@link Supplier} object with a given name, null when not found
+	 */
+	public Supplier getSupplier(String supplier) {
+		for(Supplier s : suppliers) {
+			if(s.getName().equals(supplier)) {
+				return s;
+			}
+		}
+		return null;
+	}
 
 }

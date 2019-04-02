@@ -1185,6 +1185,7 @@ public class ServerWindow extends JFrame implements UpdateListener {
 					File configFile = chooser.getSelectedFile();
 					try {
 						server.loadConfiguration(configFile.getAbsolutePath());
+						
 					} catch (FileNotFoundException exception) {
 						JOptionPane.showMessageDialog(orderPanel, "Unable to load configuration file: " + exception.getMessage());
 					}
