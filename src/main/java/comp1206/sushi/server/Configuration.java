@@ -10,9 +10,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.logging.log4j.Logger;
 
+import comp1206.sushi.common.Dish;
+import comp1206.sushi.common.Ingredient;
 import comp1206.sushi.common.Postcode;
 import comp1206.sushi.common.Restaurant;
 import comp1206.sushi.common.Supplier;
+import comp1206.sushi.common.User;
 
 /**
  * Implementation of parser of configuration files
@@ -91,7 +94,7 @@ public class Configuration {
 			Postcode restaurantPostcode = server.getPostcode(arguments.get(2));
 			//Check whether postcode has been added already
 			if(restaurantPostcode==null) {
-				throw new ParsingException("Wrong postcode: " + restaurantPostcode);
+				throw new ParsingException("Wrong postcode: " + arguments.get(2));
 			}
 			//Update the restaurant object in server
 			server.restaurant = new Restaurant(arguments.get(1), restaurantPostcode);
@@ -105,7 +108,7 @@ public class Configuration {
 			Postcode supplierPostcode = server.getPostcode(arguments.get(2));
 			//Check whether postcode has been added already
 			if(supplierPostcode==null) {
-				throw new ParsingException("Wrong postcode: " + supplierPostcode);
+				throw new ParsingException("Wrong postcode: " + arguments.get(2));
 			}
 			//Update the restaurant object in server
 			server.addSupplier(arguments.get(1), supplierPostcode);
@@ -120,7 +123,7 @@ public class Configuration {
 			Supplier itemSupplier = server.getSupplier(arguments.get(3));
 			//Check whether given supplier exists
 			if(itemSupplier==null) {
-				throw new ParsingException("Wrong supplier: " + itemSupplier);
+				throw new ParsingException("Wrong supplier: " + arguments.get(3));
 			}
 			
 			//Parse numbers
@@ -133,16 +136,100 @@ public class Configuration {
 			logger.info("Successfully added ingredient: " + arguments.get(1));
 			break;
 		case "DISH":
+			//Check number of arguments
+			if(arguments.size()!=7) {
+				throw new ParsingException("Wrong number of arguments in :" + line);
+			}
+			//Parse numbers
+			Number price = parseNumber(arguments.get(3));
+			Number dishRestockThreshold = parseNumber(arguments.get(4));
+			Number dishRestockAmount = parseNumber(arguments.get(5));
+			
+			//Add fish to server
+			Dish currentDish = server.addDish(arguments.get(1), arguments.get(2), price, dishRestockThreshold, dishRestockAmount);
+			//Parse the recipe and add the ingredients to dish
+			parseRecipe(currentDish, arguments.get(6));
+			logger.info("Successfully created dish: " + arguments.get(1));
+			
 			break;
 		case "USER":
+			//Check number of arguments
+			if(arguments.size()!=5) {
+				throw new ParsingException("Wrong number of arguments in :" + line);
+			}
+			
+			//Check whether given postcode exists
+			Postcode userPostcode = server.getPostcode(arguments.get(4));
+			if(userPostcode==null) {
+				throw new ParsingException("Wrong postcode:" +  arguments.get(4));
+			}
+			
+			//Add to server
+			server.addUser(arguments.get(1), arguments.get(2), arguments.get(3), userPostcode);
+			logger.info("Successfully created user: " + arguments.get(1));
 			break;
 		case "ORDER":
+			//Check number of arguments
+			if(arguments.size()!=3) {
+				throw new ParsingException("Wrong number of arguments in :" + line);
+			}
+			//Check whether given user exists
+			User currentUser = server.getUser(arguments.get(1));
+			if(currentUser==null) {
+				throw new ParsingException("Wrong user:" + arguments.get(1));
+			}
+			
 			break;
 		case "STOCK":
-			break;
+			//Check number of arguments
+			if(arguments.size()!=3) {
+				throw new ParsingException("Wrong number of arguments in :" + line);
+			}
+			
+			//Parse a stock number
+			Number newStock = parseNumber(arguments.get(2));
+			
+			//Check whether given ingredient exists
+			Ingredient ingredientToSetStock = server.getIngredient(arguments.get(1));
+			if(ingredientToSetStock!=null) {
+				//If exists, update server
+				server.setStock(ingredientToSetStock, newStock);
+				System.out.println("Successfully added stock of ingredient: " + arguments.get(1));
+				break;
+			}
+			//If not, check whether given dish exists
+			Dish dishToSetStock = server.getDish(arguments.get(1));
+			if(dishToSetStock!=null) {
+				//If exists, update server
+				server.setStock(dishToSetStock, newStock);
+				System.out.println("Successfully added stock of dish: " + arguments.get(1));
+				break;
+			}
+			//Otherwise, throw an exception
+			throw new ParsingException("Not a dish nor ingredient: " + line);
 		case "STAFF":
+			//Check number of arguments
+			if(arguments.size()!=2) {
+				throw new ParsingException("Wrong number of arguments in :" + line);
+			}
+			
+			//Add to server
+			server.addStaff(arguments.get(1));
+			logger.info("Successfully added staff member with name: " + arguments.get(1));
 			break;
 		case "DRONE":
+			
+			//Check number of arguments
+			if(arguments.size()!=2) {
+				throw new ParsingException("Wrong number of arguments in :" + line);
+			}
+			
+			//Parse number
+			Number speed = parseNumber(arguments.get(1));
+			
+			//Add to server
+			server.addDrone(speed);
+			logger.info("Successfully added drone with speed: " + speed);
 			break;
 		default:
 			//if token not recognized, throw ParsingException
@@ -187,6 +274,36 @@ public class Configuration {
 			throw new ParsingException("Wrong number format in : " + numberString);
 		}
 	}
+	
+	private void parseRecipe(Dish dishToBeEditted, String recipe) throws ParsingException {
+		//Split individual items
+		List<String> items = Arrays.asList(recipe.split(","));
+		//For each
+		for(String item : items) {
+			//Check for quantity format
+			if(item.contains(" * ")) {
+				//If correct, then split and parse
+				String[] itemDetails = item.split("\\s\\*\\s");
+				
+				//Parse amount number
+				Number amount = parseNumber(itemDetails[0]);
+				
+				//Check whether ingredient exists
+				Ingredient currentIngredient = server.getIngredient(itemDetails[1]);
+				if(currentIngredient==null) {
+					throw new ParsingException("Wrong ingredient:" + itemDetails[1]);
+				}
+				
+				//If everything okay, then add to the given dish
+				server.addIngredientToDish(dishToBeEditted, currentIngredient, amount);
+			}
+			else {
+				//If no *, then throw exception, because of the wrong format
+				throw new ParsingException("error in item:" + item);
+			}
+		}
+	}
+	
 	
 	/**
 	 * Custom Exception for handling parsing errors

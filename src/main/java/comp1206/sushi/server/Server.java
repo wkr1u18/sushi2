@@ -1,13 +1,12 @@
 package comp1206.sushi.server;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-
-import javax.swing.JOptionPane;
 
 import comp1206.sushi.common.*;
 import org.apache.logging.log4j.LogManager;
@@ -21,8 +20,10 @@ public class Server implements ServerInterface {
     
 	public Restaurant restaurant;
 	public ArrayList<Dish> dishes = new ArrayList<Dish>();
+	public HashMap<Dish, Number> dishStockLevels = new HashMap<Dish, Number>();
 	public ArrayList<Drone> drones = new ArrayList<Drone>();
 	public ArrayList<Ingredient> ingredients = new ArrayList<Ingredient>();
+	public HashMap<Ingredient, Number> ingredientStockLevels = new HashMap<Ingredient, Number>();
 	public ArrayList<Order> orders = new ArrayList<Order>();
 	public ArrayList<Staff> staff = new ArrayList<Staff>();
 	public ArrayList<Supplier> suppliers = new ArrayList<Supplier>();
@@ -38,44 +39,6 @@ public class Server implements ServerInterface {
         //Default configuration, if not initialised it can cause null pointer exception in ServerWindo (title set up) - but we are not allowed to edit this
 		Postcode restaurantPostcode = new Postcode("SO17 1BJ");
 		restaurant = new Restaurant("Sushi Restaurant",restaurantPostcode);
-		
-
-		/**
-		Postcode postcode1 = addPostcode("SO17 1TJ");
-		Postcode postcode2 = addPostcode("SO17 1BX");
-		Postcode postcode3 = addPostcode("SO17 2NJ");
-		Postcode postcode4 = addPostcode("SO17 1TW");
-		Postcode postcode5 = addPostcode("SO17 2LB");
-		
-		Supplier supplier1 = addSupplier("Supplier 1",postcode1);
-		Supplier supplier2 = addSupplier("Supplier 2",postcode2);
-		Supplier supplier3 = addSupplier("Supplier 3",postcode3);
-		
-		Ingredient ingredient1 = addIngredient("Ingredient 1","grams",supplier1,1,5,1);
-		Ingredient ingredient2 = addIngredient("Ingredient 2","grams",supplier2,1,5,1);
-		Ingredient ingredient3 = addIngredient("Ingredient 3","grams",supplier3,1,5,1);
-		
-		Dish dish1 = addDish("Dish 1","Dish 1",1,1,10);
-		Dish dish2 = addDish("Dish 2","Dish 2",2,1,10);
-		Dish dish3 = addDish("Dish 3","Dish 3",3,1,10);
-		
-		orders.add(new Order());
-
-		addIngredientToDish(dish1,ingredient1,1);
-		addIngredientToDish(dish1,ingredient2,2);
-		addIngredientToDish(dish2,ingredient2,3);
-		addIngredientToDish(dish2,ingredient3,1);
-		addIngredientToDish(dish3,ingredient1,2);
-		addIngredientToDish(dish3,ingredient3,1);
-		
-		addStaff("Staff 1");
-		addStaff("Staff 2");
-		addStaff("Staff 3");
-		
-		addDrone(1);
-		addDrone(2);
-		addDrone(3);
-		**/
 	}
 	
 	@Override
@@ -87,6 +50,7 @@ public class Server implements ServerInterface {
 	public Dish addDish(String name, String description, Number price, Number restockThreshold, Number restockAmount) {
 		Dish newDish = new Dish(name,description,price,restockThreshold,restockAmount);
 		this.dishes.add(newDish);
+		this.dishStockLevels.put(newDish, 0);
 		this.notifyUpdate();
 		return newDish;
 	}
@@ -94,18 +58,13 @@ public class Server implements ServerInterface {
 	@Override
 	public void removeDish(Dish dish) {
 		this.dishes.remove(dish);
+		this.dishStockLevels.remove(dish);
 		this.notifyUpdate();
 	}
 
 	@Override
 	public Map<Dish, Number> getDishStockLevels() {
-		Random random = new Random();
-		List<Dish> dishes = getDishes();
-		HashMap<Dish, Number> levels = new HashMap<Dish, Number>();
-		for(Dish dish : dishes) {
-			levels.put(dish,random.nextInt(50));
-		}
-		return levels;
+		return dishStockLevels;
 	}
 	
 	@Override
@@ -120,12 +79,12 @@ public class Server implements ServerInterface {
 	
 	@Override
 	public void setStock(Dish dish, Number stock) {
-	
+		this.dishStockLevels.put(dish, stock);
 	}
 
 	@Override
 	public void setStock(Ingredient ingredient, Number stock) {
-		
+		this.ingredientStockLevels.put(ingredient, stock);
 	}
 
 	@Override
@@ -136,12 +95,20 @@ public class Server implements ServerInterface {
 	@Override
 	public Ingredient addIngredient(String name, String unit, Supplier supplier,
 			Number restockThreshold, Number restockAmount, Number weight) {
-		Ingredient mockIngredient = new Ingredient(name,unit,supplier,restockThreshold,restockAmount,weight);
-		this.ingredients.add(mockIngredient);
+		Ingredient newIngredient = new Ingredient(name,unit,supplier,restockThreshold,restockAmount,weight);
+		this.ingredients.add(newIngredient);
+		this.ingredientStockLevels.put(newIngredient, 0);
 		this.notifyUpdate();
-		return mockIngredient;
+		return newIngredient;
 	}
 
+	public User addUser(String username, String password, String address, Postcode postcode) {
+		User newUser = new User(username, password, address, postcode);
+		this.users.add(newUser);
+		this.notifyUpdate();
+		return newUser;
+	}
+	
 	@Override
 	public void removeIngredient(Ingredient ingredient) {
 		int index = this.ingredients.indexOf(ingredient);
@@ -226,13 +193,7 @@ public class Server implements ServerInterface {
 
 	@Override
 	public Map<Ingredient, Number> getIngredientStockLevels() {
-		Random random = new Random();
-		List<Ingredient> dishes = getIngredients();
-		HashMap<Ingredient, Number> levels = new HashMap<Ingredient, Number>();
-		for(Ingredient ingredient : ingredients) {
-			levels.put(ingredient,random.nextInt(50));
-		}
-		return levels;
+		return ingredientStockLevels;
 	}
 
 	@Override
@@ -283,6 +244,19 @@ public class Server implements ServerInterface {
 		this.notifyUpdate();
 		return mock;
 	}
+	
+	public Order addOrder() {
+		Order newOrder = new Order();
+		return null;
+	}
+	
+	public Order addOrder(User buyer, Map<Dish, Number> orderDetails) {
+		Order newOrder = new Order(buyer, orderDetails);
+		this.orders.add(newOrder);
+		this.notifyUpdate();
+		return newOrder;
+	}
+	
 
 	@Override
 	public void removePostcode(Postcode postcode) throws UnableToDeleteException {
@@ -423,7 +397,9 @@ public class Server implements ServerInterface {
 	
 	@Override
 	public Restaurant getRestaurant() {
-		return restaurant;
+		synchronized(restaurant) {
+			return restaurant;
+		}
 	}
 	
 	/**
@@ -440,26 +416,83 @@ public class Server implements ServerInterface {
 	 * @return reference to {@link Postcode} object with a given name, null when not found
 	 */
 	public Postcode getPostcode(String postcode) {
-		for(Postcode p : postcodes) {
-			if(p.getName().equals(postcode)) {
-				return p;
+		List<Postcode> safePostcodes = Collections.synchronizedList(postcodes);
+		synchronized(safePostcodes) {
+			for(Postcode p : safePostcodes) {
+				if(p.getName().equals(postcode)) {
+					return p;
+				}
 			}
 		}
 		return null;
+		
 	}
 
 	/**
 	 * Returns a reference to a {@link Supplier} object for given String
-	 * @param postcode String to be searched
+	 * @param supplier String to be searched
 	 * @return reference to {@link Supplier} object with a given name, null when not found
 	 */
 	public Supplier getSupplier(String supplier) {
-		for(Supplier s : suppliers) {
-			if(s.getName().equals(supplier)) {
-				return s;
+		List<Supplier> safeSuppliers = Collections.synchronizedList(suppliers);
+		synchronized(safeSuppliers) {
+			for(Supplier s : safeSuppliers) {
+				if(s.getName().equals(supplier)) {
+					return s;
+				}
+			}	
+		}
+		return null;
+	}
+	
+	/**
+	 * Returns a reference to a {@link Ingredient} object for given String
+	 * @param ingredient String to be searched
+	 * @return reference to {@link Ingredient} object with a given name, null when not found
+	 */
+	public Ingredient getIngredient(String ingredient) {
+		List<Ingredient> safeIngredients = Collections.synchronizedList(ingredients);
+		synchronized(safeIngredients) {
+			for(Ingredient i : safeIngredients) {
+				if(i.getName().equals(ingredient)) {
+					return i;
+				}
 			}
 		}
 		return null;
 	}
-
+	
+	/**
+	 * Returns a reference to a {@link Dish} object for a given String
+	 * @param dish String to be searched
+	 * @return reference to {@link Dish} object with a given name, null when not found
+	 */
+	public Dish getDish(String dish) {
+		List<Dish> safeDishes = Collections.synchronizedList(dishes);
+		synchronized(safeDishes) {
+			for(Dish d : safeDishes) {
+				if(d.getName().equals(dish)) {
+					return d;
+				}
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * Returns a reference to a {@link User} object for a given String
+	 * @param user String to be searched
+	 * @return reference to {@link Dish} object with a given name, null when not found
+	 */
+	public User getUser(String user) {
+		List<User> safeUsers = Collections.synchronizedList(users);
+		synchronized(safeUsers) {
+			for(User u : safeUsers) {
+				if(u.getName().equals(user)) {
+					return u;
+				}
+			}
+		}
+		return null;
+	}
 }
