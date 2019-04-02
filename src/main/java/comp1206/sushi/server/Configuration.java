@@ -5,7 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.logging.log4j.Logger;
@@ -178,6 +180,10 @@ public class Configuration {
 			if(currentUser==null) {
 				throw new ParsingException("Wrong user:" + arguments.get(1));
 			}
+			Map<Dish, Number> orderDetails = parseOrder(arguments.get(2));
+			
+			server.addOrder(currentUser, orderDetails);
+			logger.info("Successfully added order from: " + arguments.get(1));
 			
 			break;
 		case "STOCK":
@@ -194,7 +200,7 @@ public class Configuration {
 			if(ingredientToSetStock!=null) {
 				//If exists, update server
 				server.setStock(ingredientToSetStock, newStock);
-				System.out.println("Successfully added stock of ingredient: " + arguments.get(1));
+				logger.info("Successfully added stock of ingredient: " + arguments.get(1));
 				break;
 			}
 			//If not, check whether given dish exists
@@ -202,7 +208,7 @@ public class Configuration {
 			if(dishToSetStock!=null) {
 				//If exists, update server
 				server.setStock(dishToSetStock, newStock);
-				System.out.println("Successfully added stock of dish: " + arguments.get(1));
+				logger.info("Successfully added stock of dish: " + arguments.get(1));
 				break;
 			}
 			//Otherwise, throw an exception
@@ -302,6 +308,35 @@ public class Configuration {
 				throw new ParsingException("error in item:" + item);
 			}
 		}
+	}
+	
+	private Map<Dish, Number> parseOrder(String order) throws ParsingException{
+		Map<Dish,Number> orderDetails = new HashMap<Dish, Number>();
+		List<String>items = Arrays.asList(order.split(","));
+		for(String item : items) {
+			//Check for quantity format
+			if(item.contains("*")) {
+				///If correct, then split and parse
+				String[] itemDetails = item.split("\\s\\*\\s");
+				
+				//Parse amount number
+				Number amount = parseNumber(itemDetails[0]);
+				
+				//Check whether dish exists
+				Dish currentDish = server.getDish(itemDetails[1]);
+				if(currentDish==null) {
+					throw new ParsingException("Wrong dish:" + itemDetails[1]);
+				}
+				
+				//Add to order details
+				orderDetails.put(currentDish, amount);
+				
+			}
+			else {
+				throw new ParsingException("error in item: " + item);
+			}
+		}
+		return orderDetails;
 	}
 	
 	

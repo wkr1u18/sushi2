@@ -31,6 +31,40 @@ public class Server implements ServerInterface {
 	public ArrayList<Postcode> postcodes = new ArrayList<Postcode>();
 	private ArrayList<UpdateListener> listeners = new ArrayList<UpdateListener>();
 	
+	
+	private void clear() {
+		synchronized(dishes) {
+			dishes = new ArrayList<Dish>();
+		}
+		synchronized(dishStockLevels) {
+			dishStockLevels = new HashMap<Dish, Number>();
+		}
+		synchronized(drones) {
+			drones = new ArrayList<Drone>();
+		}
+		synchronized(ingredients) {
+			ingredients = new ArrayList<Ingredient>();
+		}
+		synchronized(ingredientStockLevels) {
+			ingredientStockLevels = new HashMap<Ingredient, Number>();
+		}
+		synchronized(orders) {
+			orders = new ArrayList<Order>();
+		}
+		synchronized(staff) {
+			staff = new ArrayList<Staff>();
+		}
+		synchronized(suppliers) {
+			suppliers = new ArrayList<Supplier>();			
+		}
+		synchronized(users) {
+			users = new ArrayList<User>();
+		}
+		synchronized(postcodes) {
+			postcodes = new ArrayList<Postcode>();
+		}
+	}
+	
 	public Server() {
         logger.info("Starting up server...");
         
@@ -277,6 +311,7 @@ public class Server implements ServerInterface {
 
 	@Override
 	public void loadConfiguration(String filename) {
+		this.clear();
 		System.out.println("Loaded configuration: " + filename);
 		configuration.loadConfiguration(filename);
 		restaurant = new Restaurant("Joes restaurant",new Postcode("SO17 1AW"));
