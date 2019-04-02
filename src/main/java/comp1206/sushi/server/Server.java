@@ -17,6 +17,8 @@ public class Server implements ServerInterface {
 
     private static final Logger logger = LogManager.getLogger("Server");
 	
+    private Configuration configuration;
+    
 	public Restaurant restaurant;
 	public ArrayList<Dish> dishes = new ArrayList<Dish>();
 	public ArrayList<Drone> drones = new ArrayList<Drone>();
@@ -30,7 +32,9 @@ public class Server implements ServerInterface {
 	
 	public Server() {
         logger.info("Starting up server...");
-		
+        
+        configuration = new Configuration(this);
+        
 		Postcode restaurantPostcode = new Postcode("SO17 1BJ");
 		restaurant = new Restaurant("Mock Restaurant",restaurantPostcode);
 		
@@ -296,6 +300,7 @@ public class Server implements ServerInterface {
 	@Override
 	public void loadConfiguration(String filename) {
 		System.out.println("Loaded configuration: " + filename);
+		configuration.loadConfiguration(filename);
 	}
 
 	@Override
