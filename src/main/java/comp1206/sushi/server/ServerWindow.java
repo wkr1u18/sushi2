@@ -1199,14 +1199,16 @@ public class ServerWindow extends JFrame implements UpdateListener {
 	 */
 	public void refreshAll() {
 		//Refresh all panels
-        ingredientPanel.refresh();
-        dishPanel.refresh();
-        orderPanel.refresh();
-        dronePanel.refresh();
-        staffPanel.refresh();
-        postcodePanel.refresh();
+		
+        ingredientPanel.refresh();       
+        dishPanel.refresh();        
+        orderPanel.refresh();      
+        dronePanel.refresh();       
+        staffPanel.refresh();        
+        postcodePanel.refresh();        
         supplierPanel.refresh();
         userPanel.refresh();
+
 	}
 	
 	@Override

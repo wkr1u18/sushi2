@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import comp1206.sushi.common.*;
 import org.apache.logging.log4j.LogManager;
@@ -19,50 +21,31 @@ public class Server implements ServerInterface {
     private Configuration configuration;
     
 	public Restaurant restaurant;
-	public ArrayList<Dish> dishes = new ArrayList<Dish>();
-	public HashMap<Dish, Number> dishStockLevels = new HashMap<Dish, Number>();
-	public ArrayList<Drone> drones = new ArrayList<Drone>();
-	public ArrayList<Ingredient> ingredients = new ArrayList<Ingredient>();
-	public HashMap<Ingredient, Number> ingredientStockLevels = new HashMap<Ingredient, Number>();
-	public ArrayList<Order> orders = new ArrayList<Order>();
-	public ArrayList<Staff> staff = new ArrayList<Staff>();
-	public ArrayList<Supplier> suppliers = new ArrayList<Supplier>();
-	public ArrayList<User> users = new ArrayList<User>();
-	public ArrayList<Postcode> postcodes = new ArrayList<Postcode>();
-	private ArrayList<UpdateListener> listeners = new ArrayList<UpdateListener>();
+	public List<Dish> dishes = new CopyOnWriteArrayList<Dish>();
+	public Map<Dish, Number> dishStockLevels = new ConcurrentHashMap<Dish, Number>();
+	public List<Drone> drones = new CopyOnWriteArrayList<Drone>();
+	public List<Ingredient> ingredients = new CopyOnWriteArrayList<Ingredient>();
+	public Map<Ingredient, Number> ingredientStockLevels = new ConcurrentHashMap<Ingredient, Number>();
+	public List<Order> orders = new CopyOnWriteArrayList<Order>();
+	public List<Staff> staff = new CopyOnWriteArrayList<Staff>();
+	public List<Supplier> suppliers = new CopyOnWriteArrayList<Supplier>();
+	public List<User> users = new CopyOnWriteArrayList<User>();
+	public List<Postcode> postcodes = new CopyOnWriteArrayList<Postcode>();
+	private List<UpdateListener> listeners = new CopyOnWriteArrayList<UpdateListener>();
 	
 	
 	private void clear() {
-		synchronized(dishes) {
-			dishes = new ArrayList<Dish>();
-		}
-		synchronized(dishStockLevels) {
-			dishStockLevels = new HashMap<Dish, Number>();
-		}
-		synchronized(drones) {
-			drones = new ArrayList<Drone>();
-		}
-		synchronized(ingredients) {
-			ingredients = new ArrayList<Ingredient>();
-		}
-		synchronized(ingredientStockLevels) {
-			ingredientStockLevels = new HashMap<Ingredient, Number>();
-		}
-		synchronized(orders) {
-			orders = new ArrayList<Order>();
-		}
-		synchronized(staff) {
-			staff = new ArrayList<Staff>();
-		}
-		synchronized(suppliers) {
-			suppliers = new ArrayList<Supplier>();			
-		}
-		synchronized(users) {
-			users = new ArrayList<User>();
-		}
-		synchronized(postcodes) {
-			postcodes = new ArrayList<Postcode>();
-		}
+		dishes.clear();
+		dishStockLevels.clear();
+		drones.clear();
+		ingredients.clear();
+		ingredientStockLevels.clear();
+		orders.clear();
+		staff.clear();
+		suppliers.clear();		
+		users.clear();
+		postcodes.clear();
+		listeners.clear();
 	}
 	
 	public Server() {
@@ -451,16 +434,12 @@ public class Server implements ServerInterface {
 	 * @return reference to {@link Postcode} object with a given name, null when not found
 	 */
 	public Postcode getPostcode(String postcode) {
-		List<Postcode> safePostcodes = Collections.synchronizedList(postcodes);
-		synchronized(safePostcodes) {
-			for(Postcode p : safePostcodes) {
-				if(p.getName().equals(postcode)) {
-					return p;
-				}
+		for(Postcode p : postcodes) {
+			if(p.getName().equals(postcode)) {
+				return p;
 			}
 		}
 		return null;
-		
 	}
 
 	/**
@@ -469,14 +448,11 @@ public class Server implements ServerInterface {
 	 * @return reference to {@link Supplier} object with a given name, null when not found
 	 */
 	public Supplier getSupplier(String supplier) {
-		List<Supplier> safeSuppliers = Collections.synchronizedList(suppliers);
-		synchronized(safeSuppliers) {
-			for(Supplier s : safeSuppliers) {
-				if(s.getName().equals(supplier)) {
-					return s;
-				}
-			}	
-		}
+		for(Supplier s : suppliers) {
+			if(s.getName().equals(supplier)) {
+				return s;
+			}
+		}	
 		return null;
 	}
 	
@@ -486,12 +462,10 @@ public class Server implements ServerInterface {
 	 * @return reference to {@link Ingredient} object with a given name, null when not found
 	 */
 	public Ingredient getIngredient(String ingredient) {
-		List<Ingredient> safeIngredients = Collections.synchronizedList(ingredients);
-		synchronized(safeIngredients) {
-			for(Ingredient i : safeIngredients) {
-				if(i.getName().equals(ingredient)) {
-					return i;
-				}
+
+		for(Ingredient i : ingredients) {
+			if(i.getName().equals(ingredient)) {
+				return i;
 			}
 		}
 		return null;
@@ -503,12 +477,10 @@ public class Server implements ServerInterface {
 	 * @return reference to {@link Dish} object with a given name, null when not found
 	 */
 	public Dish getDish(String dish) {
-		List<Dish> safeDishes = Collections.synchronizedList(dishes);
-		synchronized(safeDishes) {
-			for(Dish d : safeDishes) {
-				if(d.getName().equals(dish)) {
-					return d;
-				}
+
+		for(Dish d : dishes) {
+			if(d.getName().equals(dish)) {
+				return d;
 			}
 		}
 		return null;
@@ -520,12 +492,9 @@ public class Server implements ServerInterface {
 	 * @return reference to {@link Dish} object with a given name, null when not found
 	 */
 	public User getUser(String user) {
-		List<User> safeUsers = Collections.synchronizedList(users);
-		synchronized(safeUsers) {
-			for(User u : safeUsers) {
-				if(u.getName().equals(user)) {
-					return u;
-				}
+		for(User u : users) {
+			if(u.getName().equals(user)) {
+				return u;
 			}
 		}
 		return null;
