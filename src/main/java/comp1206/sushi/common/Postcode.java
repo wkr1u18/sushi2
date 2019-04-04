@@ -2,6 +2,7 @@ package comp1206.sushi.common;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import comp1206.sushi.common.Postcode;
 
@@ -24,15 +25,15 @@ public class Postcode extends Model {
 	}
 	
 	@Override
-	public String getName() {
+	public synchronized String getName() {
 		return this.name;
 	}
 
-	public void setName(String name) {
+	public synchronized void setName(String name) {
 		this.name = name;
 	}
 	
-	public Number getDistance() {
+	public synchronized Number getDistance() {
 		return this.distance;
 	}
 
@@ -48,7 +49,7 @@ public class Postcode extends Model {
 	
 	protected void calculateLatLong() {
 		//This function needs implementing
-		this.latLong = new HashMap<String,Double>();
+		this.latLong = new ConcurrentHashMap<String,Double>();
 		latLong.put("lat", 0d);
 		latLong.put("lon", 0d);
 		this.distance = new Integer(0);

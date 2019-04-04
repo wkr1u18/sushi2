@@ -13,27 +13,27 @@ public class Staff extends Model {
 		this.setFatigue(0);
 	}
 
-	public String getName() {
+	public synchronized String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public synchronized void setName(String name) {
 		this.name = name;
 	}
 
-	public Number getFatigue() {
+	public synchronized Number getFatigue() {
 		return fatigue;
 	}
 
-	public void setFatigue(Number fatigue) {
+	public synchronized void setFatigue(Number fatigue) {
 		this.fatigue = fatigue;
 	}
 
-	public String getStatus() {
+	public synchronized String getStatus() {
 		return status;
 	}
 
-	public void setStatus(String status) {
+	public synchronized void setStatus(String status) {
 		notifyUpdate("status",this.status,status);
 		this.status = status;
 	}

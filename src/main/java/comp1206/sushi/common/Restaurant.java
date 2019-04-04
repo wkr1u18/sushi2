@@ -10,19 +10,19 @@ public class Restaurant {
 		this.location = location;
 	}
 	
-	public String getName() {
+	public synchronized String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public synchronized void setName(String name) {
 		this.name = name;
 	}
 
-	public Postcode getLocation() {
+	public synchronized Postcode getLocation() {
 		return location;
 	}
 
-	public void setLocation(Postcode location) {
+	public synchronized void setLocation(Postcode location) {
 		this.location = location;
 	}
 	

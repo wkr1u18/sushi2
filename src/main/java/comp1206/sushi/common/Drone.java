@@ -30,11 +30,11 @@ public class Drone extends Model {
 		return progress;
 	}
 	
-	public void setProgress(Number progress) {
+	public synchronized void setProgress(Number progress) {
 		this.progress = progress;
 	}
 	
-	public void setSpeed(Number speed) {
+	public synchronized void setSpeed(Number speed) {
 		this.speed = speed;
 	}
 	
@@ -47,15 +47,15 @@ public class Drone extends Model {
 		return source;
 	}
 
-	public void setSource(Postcode source) {
+	public synchronized void setSource(Postcode source) {
 		this.source = source;
 	}
 
-	public Postcode getDestination() {
+	public synchronized Postcode getDestination() {
 		return destination;
 	}
 
-	public void setDestination(Postcode destination) {
+	public synchronized void setDestination(Postcode destination) {
 		this.destination = destination;
 	}
 
@@ -63,7 +63,7 @@ public class Drone extends Model {
 		return capacity;
 	}
 
-	public void setCapacity(Number capacity) {
+	public synchronized void setCapacity(Number capacity) {
 		this.capacity = capacity;
 	}
 
@@ -71,15 +71,15 @@ public class Drone extends Model {
 		return battery;
 	}
 
-	public void setBattery(Number battery) {
+	public synchronized void setBattery(Number battery) {
 		this.battery = battery;
 	}
 
-	public String getStatus() {
+	public synchronized String getStatus() {
 		return status;
 	}
 
-	public void setStatus(String status) {
+	public synchronized void setStatus(String status) {
 		notifyUpdate("status",this.status,status);
 		this.status = status;
 	}

@@ -13,23 +13,23 @@ public class Supplier extends Model {
 		this.postcode = postcode;
 	}
 
-	public String getName() {
+	public synchronized String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
+	public synchronized void setName(String name) {
 		this.name = name;
 	}
 
-	public Postcode getPostcode() {
+	public synchronized Postcode getPostcode() {
 		return this.postcode;
 	}
 	
-	public void setPostcode(Postcode postcode) {
+	public synchronized void setPostcode(Postcode postcode) {
 		this.postcode = postcode;
 	}
 
-	public Number getDistance() {
+	public synchronized Number getDistance() {
 		return postcode.getDistance();
 	}
 

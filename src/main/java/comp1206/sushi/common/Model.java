@@ -1,8 +1,8 @@
 package comp1206.sushi.common;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Base model class for other models to extend. Provides key functionality for all data classes.
@@ -12,7 +12,7 @@ import java.util.List;
 public abstract class Model {
 	
 	protected String name;
-	private List<UpdateListener> updateListeners = new ArrayList<UpdateListener>();
+	private List<UpdateListener> updateListeners = new CopyOnWriteArrayList<UpdateListener>();
 	
 
 	@Override
@@ -30,7 +30,7 @@ public abstract class Model {
 	 * Set the name of a model. This notifies any listeners that the name has been updated.
 	 * @param name model name
 	 */
-	public void setName(String name) {
+	public synchronized void setName(String name) {
 		notifyUpdate("name",this.name,name);
 		this.name = name;
 	}

@@ -1,8 +1,5 @@
 package comp1206.sushi.server;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -263,7 +260,6 @@ public class Server implements ServerInterface {
 	}
 	
 	public Order addOrder() {
-		Order newOrder = new Order();
 		return null;
 	}
 	
@@ -415,9 +411,7 @@ public class Server implements ServerInterface {
 	
 	@Override
 	public Restaurant getRestaurant() {
-		synchronized(restaurant) {
-			return restaurant;
-		}
+		return restaurant;
 	}
 	
 	/**
