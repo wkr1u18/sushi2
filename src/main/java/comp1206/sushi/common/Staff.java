@@ -2,6 +2,7 @@ package comp1206.sushi.common;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import comp1206.sushi.common.Staff;
 import comp1206.sushi.server.ServerInterface;
@@ -13,10 +14,12 @@ public class Staff extends Model implements Runnable{
 	private Number fatigue;
 	private volatile boolean shutdown = false;
 	private StockManagement stockManagement;
+	private Random generator;
 	
 	public Staff(String name) {
 		this.setName(name);
 		this.setFatigue(0);
+		generator = new Random();
 	}
 
 	public synchronized String getName() {
@@ -62,16 +65,22 @@ public class Staff extends Model implements Runnable{
 					stockManagement.notifyRestocking(nextDish);
 					this.setStatus("Restocking " + nextDish.getName());
 					System.out.println(this.getName() + " is restocking " + nextDish.getName());
-					//hread.sleep(3000);
-					stockManagement.makeDish(nextDish);
+					try {
+						Thread.sleep(generator.nextInt(12)*1);
+					} catch (InterruptedException ie) {
+						
+					}
 					stockManagement.notifyRestockingFinished(nextDish);
+					stockManagement.makeDish(nextDish);
+					
 				}
 				else {
 					this.setStatus("Idle");
-					shutdown();
+					//this.shutdown();
 				}
 
 		}
+		
 		
 	}
 

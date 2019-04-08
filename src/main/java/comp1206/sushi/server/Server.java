@@ -30,17 +30,27 @@ public class Server implements ServerInterface {
 	public List<User> users = new CopyOnWriteArrayList<User>();
 	public List<Postcode> postcodes = new CopyOnWriteArrayList<Postcode>();
 	private List<UpdateListener> listeners = new CopyOnWriteArrayList<UpdateListener>();
+	private List<Thread>allThreads = new CopyOnWriteArrayList<Thread>();
 	
 	
 	private void clear() {
+		for(Staff s : staff) {
+			s.shutdown();
+		}
+		for(Thread t : allThreads) {
+			try {
+				t.join();
+			}
+			catch (InterruptedException ie) {
+				System.out.println(ie);
+			}
+		}
 		stockManagement = new StockManagement(this); 
 		dishes.clear();
 		drones.clear();
 		ingredients.clear();
 		orders.clear();
-		for(Staff s : staff) {
-			s.shutdown();
-		}
+
 		staff.clear();
 		suppliers.clear();		
 		users.clear();
@@ -91,12 +101,12 @@ public class Server implements ServerInterface {
 	
 	@Override
 	public void setRestockingIngredientsEnabled(boolean enabled) {
-		
+		stockManagement.setRestockingIngredientsEnable(enabled);
 	}
 
 	@Override
 	public void setRestockingDishesEnabled(boolean enabled) {
-		
+		stockManagement.setRestockingDishesEnable(enabled);
 	}
 	
 	@Override
@@ -192,6 +202,7 @@ public class Server implements ServerInterface {
 		this.staff.add(mock);
 		mock.setStockManagement(stockManagement);
 		Thread newWorker = new Thread(mock);
+		this.allThreads.add(newWorker);
 		newWorker.start();
 		return mock;
 	}
