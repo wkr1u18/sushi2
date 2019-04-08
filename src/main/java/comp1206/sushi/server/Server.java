@@ -18,11 +18,12 @@ public class Server implements ServerInterface {
     private Configuration configuration;
     
 	public Restaurant restaurant;
+	private StockManagement stockManagement;
+
 	public List<Dish> dishes = new CopyOnWriteArrayList<Dish>();
-	public Map<Dish, Number> dishStockLevels = new ConcurrentHashMap<Dish, Number>();
 	public List<Drone> drones = new CopyOnWriteArrayList<Drone>();
 	public List<Ingredient> ingredients = new CopyOnWriteArrayList<Ingredient>();
-	public Map<Ingredient, Number> ingredientStockLevels = new ConcurrentHashMap<Ingredient, Number>();
+	
 	public List<Order> orders = new CopyOnWriteArrayList<Order>();
 	public List<Staff> staff = new CopyOnWriteArrayList<Staff>();
 	public List<Supplier> suppliers = new CopyOnWriteArrayList<Supplier>();
@@ -32,12 +33,14 @@ public class Server implements ServerInterface {
 	
 	
 	private void clear() {
+		stockManagement = new StockManagement(this); 
 		dishes.clear();
-		dishStockLevels.clear();
 		drones.clear();
 		ingredients.clear();
-		ingredientStockLevels.clear();
 		orders.clear();
+		for(Staff s : staff) {
+			s.shutdown();
+		}
 		staff.clear();
 		suppliers.clear();		
 		users.clear();
@@ -49,11 +52,14 @@ public class Server implements ServerInterface {
         logger.info("Starting up server...");
         
         configuration = new Configuration(this);
+        stockManagement = new StockManagement(this);
         
         //Default configuration, if not initialised it can cause null pointer exception in ServerWindo (title set up) - but we are not allowed to edit this
 		Postcode restaurantPostcode = new Postcode("SO17 1BJ");
 		restaurant = new Restaurant("Sushi Restaurant",restaurantPostcode);
 	}
+	
+
 	
 	@Override
 	public List<Dish> getDishes() {
@@ -64,21 +70,23 @@ public class Server implements ServerInterface {
 	public Dish addDish(String name, String description, Number price, Number restockThreshold, Number restockAmount) {
 		Dish newDish = new Dish(name,description,price,restockThreshold,restockAmount);
 		this.dishes.add(newDish);
-		this.dishStockLevels.put(newDish, 0);
+		stockManagement.setStock(newDish, 0);
+		stockManagement.setDishesBeingRestocked(newDish, 0);
 		this.notifyUpdate();
 		return newDish;
 	}
 	
 	@Override
-	public void removeDish(Dish dish) {
+	public void removeDish(Dish dish) throws UnableToDeleteException {
+	
 		this.dishes.remove(dish);
-		this.dishStockLevels.remove(dish);
+		stockManagement.remove(dish);
 		this.notifyUpdate();
 	}
 
 	@Override
 	public Map<Dish, Number> getDishStockLevels() {
-		return dishStockLevels;
+		return stockManagement.getDishStockLevels();
 	}
 	
 	@Override
@@ -93,12 +101,14 @@ public class Server implements ServerInterface {
 	
 	@Override
 	public void setStock(Dish dish, Number stock) {
-		this.dishStockLevels.put(dish, stock);
+		stockManagement.setStock(dish, stock);
+		this.notifyUpdate();
 	}
 
 	@Override
 	public void setStock(Ingredient ingredient, Number stock) {
-		this.ingredientStockLevels.put(ingredient, stock);
+		stockManagement.setStock(ingredient, stock);
+		this.notifyUpdate();
 	}
 
 	@Override
@@ -111,7 +121,8 @@ public class Server implements ServerInterface {
 			Number restockThreshold, Number restockAmount, Number weight) {
 		Ingredient newIngredient = new Ingredient(name,unit,supplier,restockThreshold,restockAmount,weight);
 		this.ingredients.add(newIngredient);
-		this.ingredientStockLevels.put(newIngredient, 0);
+		stockManagement.setStock(newIngredient, 0);
+		stockManagement.setIngredientsBeingRestocked(newIngredient, 0);
 		this.notifyUpdate();
 		return newIngredient;
 	}
@@ -127,6 +138,7 @@ public class Server implements ServerInterface {
 	public void removeIngredient(Ingredient ingredient) {
 		int index = this.ingredients.indexOf(ingredient);
 		this.ingredients.remove(index);
+		stockManagement.remove(ingredient);
 		this.notifyUpdate();
 	}
 
@@ -178,6 +190,9 @@ public class Server implements ServerInterface {
 	public Staff addStaff(String name) {
 		Staff mock = new Staff(name);
 		this.staff.add(mock);
+		mock.setStockManagement(stockManagement);
+		Thread newWorker = new Thread(mock);
+		newWorker.start();
 		return mock;
 	}
 
@@ -207,7 +222,7 @@ public class Server implements ServerInterface {
 
 	@Override
 	public Map<Ingredient, Number> getIngredientStockLevels() {
-		return ingredientStockLevels;
+		return stockManagement.getIngredientStockLevels();
 	}
 
 	@Override
@@ -293,7 +308,6 @@ public class Server implements ServerInterface {
 		this.clear();
 		System.out.println("Loaded configuration: " + filename);
 		configuration.loadConfiguration(filename);
-		restaurant = new Restaurant("Joes restaurant",new Postcode("SO17 1AW"));
 		this.notifyUpdate();
 	}
 

@@ -1,5 +1,7 @@
 package comp1206.sushi.common;
 
+
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -14,6 +16,8 @@ public class Dish extends Model {
 	private Map <Ingredient,Number> recipe;
 	private Number restockThreshold;
 	private Number restockAmount;
+	private Integer currentlyPrepared;
+
 
 	public Dish(String name, String description, Number price, Number restockThreshold, Number restockAmount) {
 		this.name = name;
@@ -22,7 +26,26 @@ public class Dish extends Model {
 		this.restockThreshold = restockThreshold;
 		this.restockAmount = restockAmount;
 		this.recipe = new ConcurrentHashMap<Ingredient,Number>();
+		this.currentlyPrepared = 0;
+		
 	}
+	
+	public void notifyThatIsPrepared() {
+		synchronized(currentlyPrepared) {
+			currentlyPrepared++;
+		}
+	}
+	public void notifyThatIsFinished() {
+		synchronized(currentlyPrepared) {
+			currentlyPrepared--;
+		}
+	}
+	
+	public synchronized void setStock(Number newStock) {
+		this.restockAmount = newStock;
+	}
+	
+
 
 	public synchronized String getName() {
 		return name;
