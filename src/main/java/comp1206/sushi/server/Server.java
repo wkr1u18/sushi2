@@ -67,6 +67,15 @@ public class Server implements ServerInterface {
         //Default configuration, if not initialised it can cause null pointer exception in ServerWindo (title set up) - but we are not allowed to edit this
 		Postcode restaurantPostcode = new Postcode("SO17 1BJ");
 		restaurant = new Restaurant("Sushi Restaurant",restaurantPostcode);
+		
+		Comms server = new Comms(this);
+		Thread serverThread = new Thread(server);
+		serverThread.setName("Server");
+		serverThread.run();
+		
+		while(!server.isReady()) {
+			Thread.yield();
+		}
 	}
 	
 

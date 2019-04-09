@@ -4,31 +4,51 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import comp1206.sushi.common.Dish;
+import comp1206.sushi.common.Message;
 import comp1206.sushi.common.Order;
 import comp1206.sushi.common.Postcode;
 import comp1206.sushi.common.Restaurant;
+import comp1206.sushi.common.UpdateEvent;
 import comp1206.sushi.common.UpdateListener;
 import comp1206.sushi.common.User;
 
 public class Client implements ClientInterface {
 
     private static final Logger logger = LogManager.getLogger("Client");
-	
+	private CommsClient commsClient;
+    
+    private volatile boolean isRestaurantInitialised = false;
+    
+    
+    List<Postcode> postcodes;
+    private List<UpdateListener> listeners = new CopyOnWriteArrayList<UpdateListener>();
+    
     Postcode postcode1 = new Postcode("SO17 1AW");
     Restaurant restaurant = new Restaurant("sushi", postcode1);
     Dish myDish = new Dish("aa", "asdasd", 23, 2, 5);
 	public Client() {
         logger.info("Starting up client...");
+        commsClient = new CommsClient(this);
+        Thread clientThread = new Thread(commsClient);
+        clientThread.setName("Client");
+        clientThread.setDaemon(true);
+        clientThread.start();
+        
 	}
 	
 	@Override
 	public Restaurant getRestaurant() {
-		//Call server getRestaurant
+		if(!isRestaurantInitialised) {
+			isRestaurantInitialised = true;
+			
+		}
+		
 		return restaurant;
 	}
 	
@@ -54,9 +74,15 @@ public class Client implements ClientInterface {
 	}
 
 	@Override
-	public List<Postcode> getPostcodes() {
-		List<Postcode> postcodes = new ArrayList<Postcode>();
-		postcodes.add(postcode1);
+	public synchronized List<Postcode> getPostcodes() {
+		if(postcodes==null) {
+			commsClient.sendMessage("GET-POSTCODES");
+			while(postcodes==null) {
+				postcodes = commsClient.getPostcodes();
+			}
+		} else {
+			postcodes=commsClient.getPostcodes();
+		}
 		return postcodes;
 	}
 
@@ -148,13 +174,15 @@ public class Client implements ClientInterface {
 
 	@Override
 	public void addUpdateListener(UpdateListener listener) {
-		// TODO Auto-generated method stub
+		this.listeners.add(listener);
 
 	}
 
 	@Override
 	public void notifyUpdate() {
-		// TODO Auto-generated method stub
+		System.out.println("updating");
+		System.out.println(this.listeners);
+		this.listeners.forEach(listener -> listener.updated(new UpdateEvent()));
 
 	}
 

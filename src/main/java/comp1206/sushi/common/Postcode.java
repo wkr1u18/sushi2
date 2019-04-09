@@ -12,6 +12,11 @@ public class Postcode extends Model {
 	private Map<String,Double> latLong;
 	private Number distance;
 
+	public Postcode() {
+		this.name = "";
+		this.distance = Integer.valueOf(0);
+	}
+	
 	public Postcode(String code) {
 		this.name = code;
 		calculateLatLong();
