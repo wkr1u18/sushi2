@@ -8,6 +8,10 @@ public class Supplier extends Model {
 	private Postcode postcode;
 	private Number distance;
 
+	public Supplier() {
+		
+	}
+	
 	public Supplier(String name, Postcode postcode) {
 		this.name = name;
 		this.postcode = postcode;

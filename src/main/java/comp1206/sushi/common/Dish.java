@@ -18,6 +18,9 @@ public class Dish extends Model {
 	private Number restockAmount;
 	private Integer currentlyPrepared;
 
+	public Dish() {
+		
+	}
 
 	public Dish(String name, String description, Number price, Number restockThreshold, Number restockAmount) {
 		this.name = name;

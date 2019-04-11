@@ -13,10 +13,13 @@ import com.esotericsoftware.kryonet.JsonSerialization;
 import com.esotericsoftware.kryonet.KryoSerialization;
 import com.esotericsoftware.kryonet.Listener;
 
+import comp1206.sushi.common.Dish;
 import comp1206.sushi.common.Message;
 import comp1206.sushi.common.MessageWithAttachement;
 import comp1206.sushi.common.Postcode;
 import comp1206.sushi.common.Registration;
+import comp1206.sushi.common.Restaurant;
+import comp1206.sushi.common.User;
 
 public class CommsClient implements Runnable {
 
@@ -28,9 +31,11 @@ public class CommsClient implements Runnable {
 	public final static int PORT_UDP = 56777;
 
 	private ClientInterface clientInterface;
-	
+	private List<Dish>dishes;
 	private List<Postcode>postcodes;
-	
+	private User user;
+	private Restaurant restaurant;
+	private AtomicBoolean isUserReady = new AtomicBoolean(false);
 	private AtomicBoolean ready = new AtomicBoolean(false);
 	
 	private Client client;
@@ -53,7 +58,6 @@ public class CommsClient implements Runnable {
 		try {
 			client.connect(TIMEOUT, HOST, PORT_TCP, PORT_UDP);
 			ready.set(true);
-			System.out.println("connection established");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -66,17 +70,42 @@ public class CommsClient implements Runnable {
         public void received(Connection connection, Object object) {
 			if(object instanceof MessageWithAttachement) {
 				MessageWithAttachement msg = (MessageWithAttachement) object;
-				if(msg.toString().equals("POSTCODES")) {
+				switch(msg.toString()) {
+				case "DISHES":
+					dishes  = (List<Dish>) msg.getAttachement();
+					break;
+				case "POSTCODES":
 					postcodes = (List<Postcode>) msg.getAttachement();
-
+					break;
+				case "USER":
+					user = (User) msg.getAttachement();
+					isUserReady.set(true);
+					break;
+				case "RESTAURANT":
+					restaurant = (Restaurant) msg.getAttachement();
+					if(restaurant==null) {
+						restaurant = new Restaurant("SUSHI RESTAURANT", new Postcode("SO17 1BJ"));
+					}
+					break;
 				}
-				
 			}
 		}
 	}
 	
+	public List<Dish> getDishes() {
+		return dishes;
+	}
+	
 	public List<Postcode> getPostcodes() {
 		return postcodes;
+	}
+	
+	public Restaurant getRestaurant() {
+		return restaurant;
+	}
+	
+	public User getUser() {
+		return user;
 	}
 	
 	public synchronized void sendMessage(Message m) {
@@ -91,5 +120,15 @@ public class CommsClient implements Runnable {
 	public boolean isReady() {
 		return ready.get();
 	}
+	
+	public boolean isUserReady() {
+		return isUserReady.get();
+	}
+	
+	public void resetUserReady() {
+		isUserReady.set(false);
+	}
+	
+
 
 }

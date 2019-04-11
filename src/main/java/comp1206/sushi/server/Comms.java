@@ -6,6 +6,7 @@ package comp1206.sushi.server;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,9 +18,12 @@ import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
 import comp1206.sushi.common.Message;
+import comp1206.sushi.common.MessageLogin;
+import comp1206.sushi.common.MessageRegisterUser;
 import comp1206.sushi.common.MessageWithAttachement;
 import comp1206.sushi.common.Postcode;
 import comp1206.sushi.common.Registration;
+import comp1206.sushi.common.User;
 
 public class Comms implements Runnable {
 
@@ -28,13 +32,14 @@ public class Comms implements Runnable {
 	public final static int PORT_TCP = 56555;
 	public final static int PORT_UDP = 56777;
 	
-	private ServerInterface serverInterface;
+	private comp1206.sushi.server.Server serverInterface;
+
 	
 	private AtomicBoolean ready = new AtomicBoolean(false);
 	private Server server;
 	private Listener listener;
 	
-	public Comms(ServerInterface serverInterface) {
+	public Comms(comp1206.sushi.server.Server serverInterface) {
 		this.serverInterface = serverInterface;
 	}
 
@@ -60,7 +65,31 @@ public class Comms implements Runnable {
 		List<Postcode> postcodes = serverInterface.getPostcodes();
 		MessageWithAttachement msg = new MessageWithAttachement("POSTCODES", postcodes);
 		sendMessageTo(msg, connectionID);
-		
+	}
+	
+	public MessageWithAttachement makeDishesMessage() {
+		MessageWithAttachement msg = new MessageWithAttachement("DISHES", serverInterface.getDishes());
+		return msg;
+	}
+	
+	public synchronized void sendDishes(int connectionID) {
+		MessageWithAttachement msg = makeDishesMessage();
+		sendMessageTo(msg, connectionID);
+	}
+	
+	public synchronized void broadcastDishes() {
+		MessageWithAttachement msg = makeDishesMessage();
+		sendMessage(msg);
+	}
+	
+	public synchronized void sendUser(User user, int connectionID) {
+		MessageWithAttachement msg = new MessageWithAttachement("USER", user);
+		sendMessageTo(msg, connectionID);
+	}
+	
+	public synchronized void sendRestaurant(int connectionID) {
+		MessageWithAttachement msg = new MessageWithAttachement("RESTAURANT", serverInterface.getRestaurant());
+		sendMessageTo(msg, connectionID);
 	}
 	
 	public synchronized void sendMessage(Message m) {
@@ -75,15 +104,56 @@ public class Comms implements Runnable {
 		return ready.get();
 	}
 	
+	
 	class ServerListener extends Listener {
+		@Override
+		public void disconnected(Connection connection) {
+			Integer id = connection.getID();
+			List<User>users = serverInterface.getUsers();
+			for(User u : users) {
+				if(id.equals(u.getConnectionId())) {
+					u.setConnectionId(null);
+				}
+			}
+		}
+		
 		@Override
 		public void received(Connection connection, Object object) {
 			if(object instanceof Message) {
 				Message m = (Message) object;
 				String contents = m.toString();
 				switch(contents) {
+				case "GET-DISHES":
+					System.out.println("Sending dishes");
+					sendDishes(connection.getID());
+					break;
+				case "GET-RESTAURANT":
+					sendRestaurant(connection.getID());
+					break;
 				case "GET-POSTCODES": 
 					sendPostcodes(connection.getID());
+					break;
+				case "REGISTER-USER":
+					MessageRegisterUser mru = (MessageRegisterUser) m;
+					User userObject = serverInterface.addUser(mru.getName(), mru.getPassword(), mru.getAddress(), mru.getPostcode());
+					if(userObject!=null) {
+						userObject.setConnectionId(connection.getID());
+					}
+					sendUser(userObject, connection.getID());
+					break;
+				case "LOGIN":
+					MessageLogin ml = (MessageLogin) m;
+					User loginUser = serverInterface.getUser(ml.getUsername());
+					User loginResponse = null;
+					if(loginUser!=null) {
+						if(loginUser.verify(ml.getPassword())) {
+							if(loginUser.getConnectionId()==null) {
+								loginUser.setConnectionId(connection.getID());
+								loginResponse = loginUser;
+							}
+						}
+					}
+					sendUser(loginResponse, connection.getID());
 					break;
 				default:
 					System.out.println("not recognized");

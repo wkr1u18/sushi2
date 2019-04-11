@@ -5,6 +5,10 @@ public class Restaurant {
 	private String name;
 	private Postcode location;
 
+	public Restaurant() {
+		
+	}
+	
 	public Restaurant(String name, Postcode location) {
 		this.name = name;
 		this.location = location;

@@ -15,6 +15,13 @@ public class Registration {
 		kryo.register(Postcode.class);
 		kryo.register(Message.class);
 		kryo.register(MessageWithAttachement.class);
+		kryo.register(User.class);
+		kryo.register(MessageRegisterUser.class);
+		kryo.register(MessageLogin.class);
+		kryo.register(Restaurant.class);
+		kryo.register(Ingredient.class);
+		kryo.register(Supplier.class);
+		kryo.register(Dish.class);
 	}
 
 }

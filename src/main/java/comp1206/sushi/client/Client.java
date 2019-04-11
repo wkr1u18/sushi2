@@ -11,6 +11,9 @@ import org.apache.logging.log4j.Logger;
 
 import comp1206.sushi.common.Dish;
 import comp1206.sushi.common.Message;
+import comp1206.sushi.common.MessageLogin;
+import comp1206.sushi.common.MessageRegisterUser;
+import comp1206.sushi.common.MessageWithAttachement;
 import comp1206.sushi.common.Order;
 import comp1206.sushi.common.Postcode;
 import comp1206.sushi.common.Restaurant;
@@ -22,15 +25,14 @@ public class Client implements ClientInterface {
 
     private static final Logger logger = LogManager.getLogger("Client");
 	private CommsClient commsClient;
-    
-    private volatile boolean isRestaurantInitialised = false;
-    
-    
-    List<Postcode> postcodes;
+   
+    private List<Postcode> postcodes;
+    private List<Dish> dishes;
     private List<UpdateListener> listeners = new CopyOnWriteArrayList<UpdateListener>();
-    
+    private Basket userBasket;
     Postcode postcode1 = new Postcode("SO17 1AW");
-    Restaurant restaurant = new Restaurant("sushi", postcode1);
+    Restaurant restaurant;
+    
     Dish myDish = new Dish("aa", "asdasd", 23, 2, 5);
 	public Client() {
         logger.info("Starting up client...");
@@ -39,38 +41,59 @@ public class Client implements ClientInterface {
         clientThread.setName("Client");
         clientThread.setDaemon(true);
         clientThread.start();
-        
 	}
 	
 	@Override
 	public Restaurant getRestaurant() {
-		if(!isRestaurantInitialised) {
-			isRestaurantInitialised = true;
-			
+		if(restaurant==null) {
+			commsClient.sendMessage("GET-RESTAURANT");
+			while(restaurant==null) {
+				restaurant=commsClient.getRestaurant();
+			}
 		}
-		
 		return restaurant;
 	}
 	
 	@Override
 	public String getRestaurantName() {
+		if(restaurant==null) {
+			getRestaurant();
+		}
 		return restaurant.getName();
 	}
 
 	@Override
 	public Postcode getRestaurantPostcode() {
+		if(restaurant==null) {
+			getRestaurant();
+		}
 		return restaurant.getLocation();
 	}
 	
 	@Override
 	public User register(String username, String password, String address, Postcode postcode) {
-		return new User(username, password, address, postcode);
+		MessageRegisterUser msg = new MessageRegisterUser(username, password, address, postcode);
+		commsClient.sendMessage(msg);
+		while(!commsClient.isUserReady()) {
+		}
+		User newUser = commsClient.getUser();
+		commsClient.resetUserReady();
+		userBasket = new Basket(newUser);
+		return newUser;
+		
 	}
 
 	@Override
 	public User login(String username, String password) {
+		MessageLogin msg = new MessageLogin(username, password);
+		commsClient.sendMessage(msg);
 		
-		return new User(username, password, "random address", postcode1);
+		while(!commsClient.isUserReady()) {
+		}
+		User loggedUser = commsClient.getUser();
+		commsClient.resetUserReady();
+		userBasket = new Basket(loggedUser);
+		return loggedUser;
 	}
 
 	@Override
@@ -88,44 +111,52 @@ public class Client implements ClientInterface {
 
 	@Override
 	public List<Dish> getDishes() {
-		List<Dish>dishes = new ArrayList<Dish>();
-		dishes.add(myDish);
+		if(dishes==null) {
+			commsClient.sendMessage("GET-DISHES");
+			while(dishes==null) {
+				dishes = commsClient.getDishes();
+			}
+		} else {
+			dishes=commsClient.getDishes();
+		}
 		return dishes;
 	}
 
 	@Override
 	public String getDishDescription(Dish dish) {
-		return myDish.getDescription();
+		if(dishes==null) {
+			getDishes();
+		}
+		return dish.getDescription();
 	}
 
 	@Override
 	public Number getDishPrice(Dish dish) {
-		// TODO Auto-generated method stub
-		return myDish.getPrice();
+		if(dishes==null) {
+			getDishes();
+		}
+		return dish.getPrice();
 	}
 
 	@Override
 	public Map<Dish, Number> getBasket(User user) {
-		Map<Dish,Number>basket = new HashMap<Dish, Number>();
-		basket.put(myDish, 7);
-		return basket;
+		return userBasket.getBasket();
 	}
 
 	@Override
 	public Number getBasketCost(User user) {
-		
-		return 7;
+		return userBasket.getBasketCost();
 	}
 
 	@Override
 	public void addDishToBasket(User user, Dish dish, Number quantity) {
-		// TODO Auto-generated method stub
+		userBasket.addDishToBasket(dish, quantity);
 
 	}
 
 	@Override
 	public void updateDishInBasket(User user, Dish dish, Number quantity) {
-		// TODO Auto-generated method stub
+		userBasket.addDishToBasket(dish, quantity);
 
 	}
 
@@ -137,8 +168,7 @@ public class Client implements ClientInterface {
 
 	@Override
 	public void clearBasket(User user) {
-		// TODO Auto-generated method stub
-
+		userBasket.clearBasket();
 	}
 
 	@Override
@@ -180,8 +210,6 @@ public class Client implements ClientInterface {
 
 	@Override
 	public void notifyUpdate() {
-		System.out.println("updating");
-		System.out.println(this.listeners);
 		this.listeners.forEach(listener -> listener.updated(new UpdateEvent()));
 
 	}

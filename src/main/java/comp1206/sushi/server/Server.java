@@ -32,6 +32,7 @@ public class Server implements ServerInterface {
 	private List<UpdateListener> listeners = new CopyOnWriteArrayList<UpdateListener>();
 	private List<Thread>allThreads = new CopyOnWriteArrayList<Thread>();
 	
+	private Map<Integer, User> userClientBinding = new ConcurrentHashMap<Integer, User>();
 	
 	private void clear() {
 		for(Staff s : staff) {
@@ -56,6 +57,7 @@ public class Server implements ServerInterface {
 		users.clear();
 		postcodes.clear();
 		listeners.clear();
+		userClientBinding.clear();
 	}
 	
 	public Server() {
@@ -147,10 +149,14 @@ public class Server implements ServerInterface {
 	}
 
 	public User addUser(String username, String password, String address, Postcode postcode) {
-		User newUser = new User(username, password, address, postcode);
-		this.users.add(newUser);
-		this.notifyUpdate();
-		return newUser;
+		if(getUser(username)==null) {
+			User newUser = new User(username, password, address, postcode);
+			this.users.add(newUser);
+			this.notifyUpdate();
+			return newUser;
+		} else {
+			return null;
+		}
 	}
 	
 	@Override
