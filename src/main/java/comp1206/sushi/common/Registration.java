@@ -22,6 +22,8 @@ public class Registration {
 		kryo.register(Ingredient.class);
 		kryo.register(Supplier.class);
 		kryo.register(Dish.class);
+		kryo.register(Basket.class);
+		kryo.register(MessageBasket.class);
 	}
 
 }

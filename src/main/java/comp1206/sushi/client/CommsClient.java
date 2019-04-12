@@ -13,6 +13,7 @@ import com.esotericsoftware.kryonet.JsonSerialization;
 import com.esotericsoftware.kryonet.KryoSerialization;
 import com.esotericsoftware.kryonet.Listener;
 
+import comp1206.sushi.common.Basket;
 import comp1206.sushi.common.Dish;
 import comp1206.sushi.common.Message;
 import comp1206.sushi.common.MessageWithAttachement;
@@ -34,10 +35,11 @@ public class CommsClient implements Runnable {
 	private List<Dish>dishes;
 	private List<Postcode>postcodes;
 	private User user;
+	private Basket basket;
 	private Restaurant restaurant;
 	private AtomicBoolean isUserReady = new AtomicBoolean(false);
 	private AtomicBoolean ready = new AtomicBoolean(false);
-	
+	private AtomicBoolean isBasketReady = new AtomicBoolean(true);
 	private Client client;
 	private Listener listener;
 	
@@ -71,6 +73,15 @@ public class CommsClient implements Runnable {
 			if(object instanceof MessageWithAttachement) {
 				MessageWithAttachement msg = (MessageWithAttachement) object;
 				switch(msg.toString()) {
+				case "BASKET":
+					if(basket!=null) {
+						basket = (Basket) msg.getAttachement();
+						clientInterface.notifyUpdate();
+					} else {
+						basket = (Basket) msg.getAttachement();
+						
+					}
+					break;
 				case "DISHES":
 					dishes  = (List<Dish>) msg.getAttachement();
 					break;
@@ -90,6 +101,10 @@ public class CommsClient implements Runnable {
 				}
 			}
 		}
+	}
+	
+	public Basket getBasket() {
+		return basket;
 	}
 	
 	public List<Dish> getDishes() {
@@ -128,6 +143,15 @@ public class CommsClient implements Runnable {
 	public void resetUserReady() {
 		isUserReady.set(false);
 	}
+	
+	public boolean isBasketReady() {
+		return isBasketReady.get();
+	}
+	
+	public void resetBasketReady() {
+		isBasketReady.set(false);
+	}
+	
 	
 
 

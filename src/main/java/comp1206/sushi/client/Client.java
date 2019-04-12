@@ -9,8 +9,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import comp1206.sushi.common.Basket;
 import comp1206.sushi.common.Dish;
 import comp1206.sushi.common.Message;
+import comp1206.sushi.common.MessageBasket;
 import comp1206.sushi.common.MessageLogin;
 import comp1206.sushi.common.MessageRegisterUser;
 import comp1206.sushi.common.MessageWithAttachement;
@@ -26,6 +28,7 @@ public class Client implements ClientInterface {
     private static final Logger logger = LogManager.getLogger("Client");
 	private CommsClient commsClient;
    
+	private User user;
     private List<Postcode> postcodes;
     private List<Dish> dishes;
     private List<UpdateListener> listeners = new CopyOnWriteArrayList<UpdateListener>();
@@ -41,6 +44,7 @@ public class Client implements ClientInterface {
         clientThread.setName("Client");
         clientThread.setDaemon(true);
         clientThread.start();
+        this.notifyUpdate();
 	}
 	
 	@Override
@@ -76,10 +80,9 @@ public class Client implements ClientInterface {
 		commsClient.sendMessage(msg);
 		while(!commsClient.isUserReady()) {
 		}
-		User newUser = commsClient.getUser();
+		user = commsClient.getUser();
 		commsClient.resetUserReady();
-		userBasket = new Basket(newUser);
-		return newUser;
+		return user;
 		
 	}
 
@@ -90,10 +93,9 @@ public class Client implements ClientInterface {
 		
 		while(!commsClient.isUserReady()) {
 		}
-		User loggedUser = commsClient.getUser();
+		user = commsClient.getUser();
 		commsClient.resetUserReady();
-		userBasket = new Basket(loggedUser);
-		return loggedUser;
+		return user;
 	}
 
 	@Override
@@ -139,35 +141,57 @@ public class Client implements ClientInterface {
 	}
 
 	@Override
-	public Map<Dish, Number> getBasket(User user) {
-		return userBasket.getBasket();
+	public synchronized Map<Dish, Number> getBasket(User user) {
+		if(userBasket==null) {
+			commsClient.sendMessage("GET-BASKET");
+			do {
+				userBasket=commsClient.getBasket();	
+			} while (userBasket==null);
+		}
+		return userBasket.getContents();
 	}
 
 	@Override
 	public Number getBasketCost(User user) {
+		getBasket(user);
 		return userBasket.getBasketCost();
 	}
 
 	@Override
 	public void addDishToBasket(User user, Dish dish, Number quantity) {
+		if(userBasket==null) {
+			getBasket(user);
+		}
 		userBasket.addDishToBasket(dish, quantity);
+		Message m = new MessageBasket("ADD-DISH",dish.getName(), quantity);
+		commsClient.sendMessage(m);
+		//userBasket.addDishToBasket(dish, quantity);
 
 	}
 
 	@Override
 	public void updateDishInBasket(User user, Dish dish, Number quantity) {
-		userBasket.addDishToBasket(dish, quantity);
-
+		if(userBasket==null) {
+			getBasket(user);
+		}
+		userBasket.updateDishInBasket(dish, quantity);
+		Message m = new MessageBasket("ADD-DISH",dish.getName(), quantity);
+		commsClient.sendMessage(m);
 	}
 
 	@Override
 	public Order checkoutBasket(User user) {
-		
-		return new Order();
+		Message m = new Message("CHECKOUT-BASKET");
+		commsClient.sendMessage(m);
+		return userBasket.checkoutBasket(user);
 	}
 
 	@Override
 	public void clearBasket(User user) {
+		if(userBasket==null) {
+			getBasket(user);
+		}
+		Message m = new Message("CLEAR-BASKET");
 		userBasket.clearBasket();
 	}
 

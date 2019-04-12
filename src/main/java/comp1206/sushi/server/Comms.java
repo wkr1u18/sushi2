@@ -17,7 +17,10 @@ import com.esotericsoftware.kryonet.KryoSerialization;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
+import comp1206.sushi.common.Basket;
+import comp1206.sushi.common.Dish;
 import comp1206.sushi.common.Message;
+import comp1206.sushi.common.MessageBasket;
 import comp1206.sushi.common.MessageLogin;
 import comp1206.sushi.common.MessageRegisterUser;
 import comp1206.sushi.common.MessageWithAttachement;
@@ -104,6 +107,25 @@ public class Comms implements Runnable {
 		return ready.get();
 	}
 	
+	public synchronized void sendBasket(int userId) {
+		User basketOwner = serverInterface.getUser(userId);
+		Basket userBasket = serverInterface.getBasket(basketOwner);
+		MessageWithAttachement basketReply = new MessageWithAttachement("BASKET", userBasket);
+		sendMessageTo(basketReply, userId);
+	}
+	
+	public synchronized void clearBasket(int userId) {
+		User basketOwner = serverInterface.getUser(userId);
+		Basket userBasket = serverInterface.getBasket(basketOwner);
+		userBasket.clearBasket();
+	}
+	
+	public synchronized void checkoutBasket(int userId) {
+		User basketOwner = serverInterface.getUser(userId);
+		Basket userBasket = serverInterface.getBasket(basketOwner);
+		serverInterface.addOrder(basketOwner, userBasket.getContents());
+		serverInterface.notifyUpdate();
+	}
 	
 	class ServerListener extends Listener {
 		@Override
@@ -123,8 +145,23 @@ public class Comms implements Runnable {
 				Message m = (Message) object;
 				String contents = m.toString();
 				switch(contents) {
+				case "CHECKOUT-BASKET":
+					checkoutBasket(connection.getID());
+					break;
+				case "CLEAR-BASKET":
+					clearBasket(connection.getID());
+					break;
+				case "GET-BASKET":
+					sendBasket(connection.getID());
+					break;
+				case "ADD-DISH":
+					MessageBasket messageBasket = (MessageBasket) m;
+					User basketOwner = serverInterface.getUser(connection.getID());
+					Basket usersBasket = serverInterface.getBasket(basketOwner);
+					Dish dishToBeAdded = serverInterface.getDish(messageBasket.getDish());
+					usersBasket.addDishToBasket(dishToBeAdded, messageBasket.getAmount());
+					break;
 				case "GET-DISHES":
-					System.out.println("Sending dishes");
 					sendDishes(connection.getID());
 					break;
 				case "GET-RESTAURANT":

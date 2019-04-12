@@ -8,6 +8,7 @@
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/StockManagement.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/MessageLogin.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/Launcher.java
+/home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/MessageBasket.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/client/ClientWindow.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/MessageWithAttachement.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/Message.java
@@ -16,7 +17,6 @@
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/Order.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/Supplier.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/ServerApplication.java
-/home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/client/Basket.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/Restaurant.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/client/CommsClient.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/server/ServerWindow.java
@@ -25,6 +25,7 @@
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/UpdateListener.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/Staff.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/Drone.java
+/home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/common/Basket.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/ClientApplication.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/client/Client.java
 /home/wkr1u18/eclipse-workspace/sushi2/src/main/java/comp1206/sushi/server/Comms.java

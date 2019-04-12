@@ -24,6 +24,7 @@ public class Server implements ServerInterface {
 	public List<Drone> drones = new CopyOnWriteArrayList<Drone>();
 	public List<Ingredient> ingredients = new CopyOnWriteArrayList<Ingredient>();
 	
+	public Map<User, Basket> baskets = new ConcurrentHashMap<User, Basket>();
 	public List<Order> orders = new CopyOnWriteArrayList<Order>();
 	public List<Staff> staff = new CopyOnWriteArrayList<Staff>();
 	public List<Supplier> suppliers = new CopyOnWriteArrayList<Supplier>();
@@ -51,12 +52,12 @@ public class Server implements ServerInterface {
 		drones.clear();
 		ingredients.clear();
 		orders.clear();
-
 		staff.clear();
 		suppliers.clear();		
 		users.clear();
 		postcodes.clear();
 		listeners.clear();
+		baskets.clear();
 		userClientBinding.clear();
 	}
 	
@@ -152,6 +153,7 @@ public class Server implements ServerInterface {
 		if(getUser(username)==null) {
 			User newUser = new User(username, password, address, postcode);
 			this.users.add(newUser);
+			baskets.put(newUser, new Basket());
 			this.notifyUpdate();
 			return newUser;
 		} else {
@@ -326,6 +328,7 @@ public class Server implements ServerInterface {
 	@Override
 	public void removeUser(User user) {
 		this.users.remove(user);
+		this.baskets.remove(user);
 		this.notifyUpdate();
 	}
 
@@ -454,6 +457,11 @@ public class Server implements ServerInterface {
 		return restaurant;
 	}
 	
+	
+	public Basket getBasket(User user) {
+		return baskets.get(user);
+	}
+	
 	/**
 	 * Gives a reference to {@link Logger object}
 	 * @return Logger object used by the server
@@ -528,6 +536,15 @@ public class Server implements ServerInterface {
 	public User getUser(String user) {
 		for(User u : users) {
 			if(u.getName().equals(user)) {
+				return u;
+			}
+		}
+		return null;
+	}
+	
+	public User getUser(int connectionId) {
+		for(User u : users) {
+			if(u.getConnectionId().equals(connectionId)) {
 				return u;
 			}
 		}
