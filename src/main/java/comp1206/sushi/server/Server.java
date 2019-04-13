@@ -153,7 +153,6 @@ public class Server implements ServerInterface {
 		if(getUser(username)==null) {
 			User newUser = new User(username, password, address, postcode);
 			this.users.add(newUser);
-			baskets.put(newUser, new Basket());
 			this.notifyUpdate();
 			return newUser;
 		} else {
@@ -328,7 +327,6 @@ public class Server implements ServerInterface {
 	@Override
 	public void removeUser(User user) {
 		this.users.remove(user);
-		this.baskets.remove(user);
 		this.notifyUpdate();
 	}
 
@@ -460,6 +458,16 @@ public class Server implements ServerInterface {
 	
 	public Basket getBasket(User user) {
 		return baskets.get(user);
+	}
+	
+	public void createBasket(User user) {
+		System.out.println("Creating basket");
+		baskets.put(user, new Basket());
+	}
+	
+	public void removeBasket(User user) {
+		System.out.println("Deleting basket");
+		baskets.remove(user);
 	}
 	
 	/**

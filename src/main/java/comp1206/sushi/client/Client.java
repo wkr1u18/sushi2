@@ -143,10 +143,11 @@ public class Client implements ClientInterface {
 	@Override
 	public synchronized Map<Dish, Number> getBasket(User user) {
 		if(userBasket==null) {
-			commsClient.sendMessage("GET-BASKET");
-			do {
-				userBasket=commsClient.getBasket();	
-			} while (userBasket==null);
+//			commsClient.sendMessage("GET-BASKET");
+//			do {
+//				userBasket=commsClient.getBasket();	
+//			} while (userBasket==null);
+			userBasket = new Basket();
 		}
 		return userBasket.getContents();
 	}
@@ -181,6 +182,7 @@ public class Client implements ClientInterface {
 
 	@Override
 	public Order checkoutBasket(User user) {
+		clearBasket(user);
 		Message m = new Message("CHECKOUT-BASKET");
 		commsClient.sendMessage(m);
 		return userBasket.checkoutBasket(user);

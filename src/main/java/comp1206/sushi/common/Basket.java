@@ -6,10 +6,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Basket {
 
 	private Map<Dish, Number> basket;
-	
 	public Basket() {
 		basket = new ConcurrentHashMap<Dish, Number>();
 	}
+	
 	
 	public Map<Dish, Number> getBasket() {
 		return basket;
@@ -22,14 +22,21 @@ public class Basket {
 	public void addDishToBasket(Dish dish, Number quantity) {
 		if(basket.get(dish)!=null) {
 			Number newQuantity = basket.get(dish).intValue()+quantity.intValue();
-			basket.remove(dish);
+			//basket.remove(dish);
 			basket.put(dish, newQuantity);
 		}
-		basket.put(dish, quantity);
+		else {
+			basket.put(dish, quantity);
+		}
 	}
 	
 	public void updateDishInBasket(Dish dish, Number newQuantity) {
-		addDishToBasket(dish, newQuantity);
+		if(newQuantity.intValue()==0) {
+			basket.remove(dish);
+		}
+		else {
+			basket.put(dish, newQuantity);
+		}
 	}
 	
 	public Number getBasketCost() {
@@ -41,7 +48,7 @@ public class Basket {
 		return result;
 	}
 	
-	public Map<Dish, Number> getContents() {
+	public synchronized Map<Dish, Number> getContents() {
 		return basket;
 	}
 	

@@ -135,6 +135,7 @@ public class Comms implements Runnable {
 			for(User u : users) {
 				if(id.equals(u.getConnectionId())) {
 					u.setConnectionId(null);
+					serverInterface.removeBasket(u);
 				}
 			}
 		}
@@ -176,6 +177,7 @@ public class Comms implements Runnable {
 					if(userObject!=null) {
 						userObject.setConnectionId(connection.getID());
 					}
+					serverInterface.createBasket(userObject);
 					sendUser(userObject, connection.getID());
 					break;
 				case "LOGIN":
@@ -190,6 +192,7 @@ public class Comms implements Runnable {
 							}
 						}
 					}
+					serverInterface.createBasket(loginUser);
 					sendUser(loginResponse, connection.getID());
 					break;
 				default:
