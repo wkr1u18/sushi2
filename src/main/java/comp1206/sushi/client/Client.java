@@ -14,6 +14,7 @@ import comp1206.sushi.common.Dish;
 import comp1206.sushi.common.Message;
 import comp1206.sushi.common.MessageBasket;
 import comp1206.sushi.common.MessageLogin;
+import comp1206.sushi.common.MessageOrder;
 import comp1206.sushi.common.MessageRegisterUser;
 import comp1206.sushi.common.MessageWithAttachement;
 import comp1206.sushi.common.Order;
@@ -31,7 +32,9 @@ public class Client implements ClientInterface {
 	private User user;
     private List<Postcode> postcodes;
     private List<Dish> dishes;
+    private List<Order> orders;
     private List<UpdateListener> listeners = new CopyOnWriteArrayList<UpdateListener>();
+    
     private Basket userBasket;
     Postcode postcode1 = new Postcode("SO17 1AW");
     Restaurant restaurant;
@@ -176,7 +179,7 @@ public class Client implements ClientInterface {
 			getBasket(user);
 		}
 		userBasket.updateDishInBasket(dish, quantity);
-		Message m = new MessageBasket("ADD-DISH",dish.getName(), quantity);
+		Message m = new MessageBasket("UPDATE-DISH",dish.getName(), quantity);
 		commsClient.sendMessage(m);
 	}
 
@@ -198,33 +201,36 @@ public class Client implements ClientInterface {
 	}
 
 	@Override
-	public List<Order> getOrders(User user) {
-		List<Order> orders = new ArrayList<Order>();
-		orders.add(new Order());
+	public synchronized List<Order> getOrders(User user) {
+		orders = commsClient.getOrders();
+	
 		return orders;
 	}
 
 	@Override
 	public boolean isOrderComplete(Order order) {
-		// TODO Auto-generated method stub
-		return false;
+		if(order.getStatus().equals("Complete")) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
 	@Override
 	public String getOrderStatus(Order order) {
-		// TODO Auto-generated method stub
-		return null;
+		return order.getStatus();
 	}
 
 	@Override
 	public Number getOrderCost(Order order) {
-		// TODO Auto-generated method stub
-		return null;
+		return order.getCost();
 	}
 
 	@Override
 	public void cancelOrder(Order order) {
-		// TODO Auto-generated method stub
+		MessageOrder msg = new MessageOrder("CANCEL-ORDER", order);
+		commsClient.sendMessage(msg);
 
 	}
 
@@ -236,7 +242,11 @@ public class Client implements ClientInterface {
 
 	@Override
 	public void notifyUpdate() {
-		this.listeners.forEach(listener -> listener.updated(new UpdateEvent()));
+		try {
+			this.listeners.forEach(listener -> listener.updated(new UpdateEvent()));
+		} catch (NullPointerException np) {
+			
+		}
 
 	}
 

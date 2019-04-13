@@ -3,6 +3,7 @@
 package comp1206.sushi.client;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,6 +18,7 @@ import comp1206.sushi.common.Basket;
 import comp1206.sushi.common.Dish;
 import comp1206.sushi.common.Message;
 import comp1206.sushi.common.MessageWithAttachement;
+import comp1206.sushi.common.Order;
 import comp1206.sushi.common.Postcode;
 import comp1206.sushi.common.Registration;
 import comp1206.sushi.common.Restaurant;
@@ -34,6 +36,7 @@ public class CommsClient implements Runnable {
 	private ClientInterface clientInterface;
 	private List<Dish>dishes;
 	private List<Postcode>postcodes;
+	private List<Order>orders = new ArrayList<Order>();
 	private User user;
 	private Basket basket;
 	private Restaurant restaurant;
@@ -85,6 +88,16 @@ public class CommsClient implements Runnable {
 				case "DISHES":
 					dishes  = (List<Dish>) msg.getAttachement();
 					break;
+				case "ORDERS":
+					if(orders!=null) {
+						orders = (List<Order>) msg.getAttachement();
+						System.out.println("i got here");
+						clientInterface.notifyUpdate();
+					}
+					else {
+						orders = (List<Order>) msg.getAttachement();
+					}
+					break;
 				case "POSTCODES":
 					postcodes = (List<Postcode>) msg.getAttachement();
 					break;
@@ -101,6 +114,10 @@ public class CommsClient implements Runnable {
 				}
 			}
 		}
+	}
+	
+	public List<Order> getOrders() {
+		return orders;
 	}
 	
 	public Basket getBasket() {

@@ -11,6 +11,7 @@ public class Registration {
 		kryo.register(java.lang.Double.class);
 		kryo.register(java.util.List.class);
 		kryo.register(java.util.concurrent.CopyOnWriteArrayList.class);
+		kryo.register(java.util.ArrayList.class);
 		kryo.register(java.util.concurrent.ConcurrentHashMap.class);
 		kryo.register(Postcode.class);
 		kryo.register(Message.class);
@@ -24,6 +25,8 @@ public class Registration {
 		kryo.register(Dish.class);
 		kryo.register(Basket.class);
 		kryo.register(MessageBasket.class);
+		kryo.register(Order.class);
+		kryo.register(MessageOrder.class);
 	}
 
 }

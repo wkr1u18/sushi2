@@ -236,15 +236,13 @@ public class Server implements ServerInterface {
 
 	@Override
 	public void removeOrder(Order order) {
-		int index = this.orders.indexOf(order);
-		this.orders.remove(index);
+		this.orders.remove(order);
 		this.notifyUpdate();
 	}
 	
 	@Override
 	public Number getOrderCost(Order order) {
-		Random random = new Random();
-		return random.nextInt(100);
+		return order.getCost();
 	}
 
 	@Override
@@ -348,17 +346,17 @@ public class Server implements ServerInterface {
 
 	@Override
 	public boolean isOrderComplete(Order order) {
-		return true;
+		if(order.getStatus().equals("Complete")) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
 	@Override
 	public String getOrderStatus(Order order) {
-		Random rand = new Random();
-		if(rand.nextBoolean()) {
-			return "Complete";
-		} else {
-			return "Pending";
-		}
+		return order.getStatus();
 	}
 	
 	@Override
@@ -373,12 +371,7 @@ public class Server implements ServerInterface {
 	
 	@Override
 	public String getStaffStatus(Staff staff) {
-		Random rand = new Random();
-		if(rand.nextBoolean()) {
-			return "Idle";
-		} else {
-			return "Working";
-		}
+		return staff.getStatus();
 	}
 
 	@Override
@@ -554,6 +547,15 @@ public class Server implements ServerInterface {
 		for(User u : users) {
 			if(u.getConnectionId().equals(connectionId)) {
 				return u;
+			}
+		}
+		return null;
+	}
+	
+	public Order getOrder(String username, String orderName) {
+		for(Order o : orders) {
+			if(o.getName().equals(orderName)&&o.getUser().getName().equals(username)) {
+				return o;
 			}
 		}
 		return null;

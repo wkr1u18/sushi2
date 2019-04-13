@@ -22,8 +22,10 @@ import comp1206.sushi.common.Dish;
 import comp1206.sushi.common.Message;
 import comp1206.sushi.common.MessageBasket;
 import comp1206.sushi.common.MessageLogin;
+import comp1206.sushi.common.MessageOrder;
 import comp1206.sushi.common.MessageRegisterUser;
 import comp1206.sushi.common.MessageWithAttachement;
+import comp1206.sushi.common.Order;
 import comp1206.sushi.common.Postcode;
 import comp1206.sushi.common.Registration;
 import comp1206.sushi.common.User;
@@ -127,6 +129,45 @@ public class Comms implements Runnable {
 		serverInterface.notifyUpdate();
 	}
 	
+	public synchronized void addDishToBasket(Message m, int id) {
+		MessageBasket messageBasket = (MessageBasket) m;
+		User basketOwner = serverInterface.getUser(id);
+		Basket usersBasket = serverInterface.getBasket(basketOwner);
+		Dish dishToBeAdded = serverInterface.getDish(messageBasket.getDish());
+		usersBasket.addDishToBasket(dishToBeAdded, messageBasket.getAmount());
+	}
+	
+	public synchronized void updateDishInBasket(Message m, int id) {
+		MessageBasket messageBasket = (MessageBasket) m;
+		User basketOwner = serverInterface.getUser(id);
+		Basket usersBasket = serverInterface.getBasket(basketOwner);
+		Dish dishToBeAdded = serverInterface.getDish(messageBasket.getDish());
+		usersBasket.updateDishInBasket(dishToBeAdded, messageBasket.getAmount());
+	}
+	
+	public synchronized void cancelOrder(Message m) {
+		MessageOrder messageOrder = (MessageOrder) m;
+		Order order = serverInterface.getOrder(messageOrder.getUsername(), messageOrder.getOrderName());
+		if(order!=null) {
+			order.cancelOrder();
+		}
+		else {
+			System.out.println("NO SUCH ORDER");
+		}
+	}
+	
+	public synchronized void sendOrders(int connectionId) {
+		User user = serverInterface.getUser(connectionId);
+		List<Order> ordersToBeSent = new ArrayList<Order>();
+		for(Order o : serverInterface.getOrders()) {
+			if(o.getUser().equals(user)) {
+				ordersToBeSent.add(o);
+			}
+		}
+		MessageWithAttachement msg = new MessageWithAttachement("ORDERS", ordersToBeSent);
+		sendMessageTo(msg, connectionId);
+	}
+	
 	class ServerListener extends Listener {
 		@Override
 		public void disconnected(Connection connection) {
@@ -146,8 +187,15 @@ public class Comms implements Runnable {
 				Message m = (Message) object;
 				String contents = m.toString();
 				switch(contents) {
+				case "CANCEL-ORDER":
+					cancelOrder(m);
+					break;
 				case "CHECKOUT-BASKET":
 					checkoutBasket(connection.getID());
+					break;
+				case "GET-ORDERS":
+					System.out.println("SENDING ORDERS");
+					sendOrders(connection.getID());
 					break;
 				case "CLEAR-BASKET":
 					clearBasket(connection.getID());
@@ -155,12 +203,11 @@ public class Comms implements Runnable {
 				case "GET-BASKET":
 					sendBasket(connection.getID());
 					break;
+				case "UPDATE-DISH":
+					updateDishInBasket(m, connection.getID());
+					break;
 				case "ADD-DISH":
-					MessageBasket messageBasket = (MessageBasket) m;
-					User basketOwner = serverInterface.getUser(connection.getID());
-					Basket usersBasket = serverInterface.getBasket(basketOwner);
-					Dish dishToBeAdded = serverInterface.getDish(messageBasket.getDish());
-					usersBasket.addDishToBasket(dishToBeAdded, messageBasket.getAmount());
+					addDishToBasket(m, connection.getID());
 					break;
 				case "GET-DISHES":
 					sendDishes(connection.getID());
@@ -194,6 +241,7 @@ public class Comms implements Runnable {
 					}
 					serverInterface.createBasket(loginUser);
 					sendUser(loginResponse, connection.getID());
+					sendOrders(connection.getID());
 					break;
 				default:
 					System.out.println("not recognized");
