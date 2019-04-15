@@ -85,6 +85,17 @@ public class StockManagement {
 		}
 	}
 	
+	public boolean isDishBeingRestocked(Dish d) {
+		synchronized(dishesBeingRestocked) {
+			if(dishesBeingRestocked.get(d).intValue()>0) {
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+	}
+	
 	public void setIngredientsBeingRestocked(Ingredient i, Integer n) {
 		synchronized(ingredientsBeingRestocked) {
 			ingredientsBeingRestocked.put(i, n);

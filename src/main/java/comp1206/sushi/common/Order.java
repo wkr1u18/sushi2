@@ -19,6 +19,7 @@ public class Order extends Model {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/YYYY HH:mm:ss");  
 		LocalDateTime now = LocalDateTime.now();  
 		this.name = dtf.format(now);
+		this.status="Placed";
 	}
 	
 	public Order(User buyer, Map<Dish,Number> orderDetails) {
@@ -41,7 +42,7 @@ public class Order extends Model {
 	}
 	
 	public synchronized Number getDistance() {
-		return 1;
+		return this.buyer.getDistance();
 	}
 
 	@Override

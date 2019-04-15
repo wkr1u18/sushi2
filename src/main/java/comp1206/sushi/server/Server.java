@@ -23,7 +23,6 @@ public class Server implements ServerInterface {
 	public List<Dish> dishes = new CopyOnWriteArrayList<Dish>();
 	public List<Drone> drones = new CopyOnWriteArrayList<Drone>();
 	public List<Ingredient> ingredients = new CopyOnWriteArrayList<Ingredient>();
-	
 	public Map<User, Basket> baskets = new ConcurrentHashMap<User, Basket>();
 	public List<Order> orders = new CopyOnWriteArrayList<Order>();
 	public List<Staff> staff = new CopyOnWriteArrayList<Staff>();
@@ -31,22 +30,12 @@ public class Server implements ServerInterface {
 	public List<User> users = new CopyOnWriteArrayList<User>();
 	public List<Postcode> postcodes = new CopyOnWriteArrayList<Postcode>();
 	private List<UpdateListener> listeners = new CopyOnWriteArrayList<UpdateListener>();
-	private List<Thread>allThreads = new CopyOnWriteArrayList<Thread>();
 	private Comms server;
-	
-	private Map<Integer, User> userClientBinding = new ConcurrentHashMap<Integer, User>();
 	
 	private void clear() {
 		for(Staff s : staff) {
 			s.shutdown();
-		}
-		for(Thread t : allThreads) {
-			try {
-				t.join();
-			}
-			catch (InterruptedException ie) {
-				System.out.println(ie);
-			}
+			s.getThreadInstace().stop();
 		}
 		stockManagement = new StockManagement(this); 
 		dishes.clear();
@@ -59,7 +48,7 @@ public class Server implements ServerInterface {
 		postcodes.clear();
 		listeners.clear();
 		baskets.clear();
-		userClientBinding.clear();
+
 	}
 	
 	public Server() {
@@ -68,7 +57,7 @@ public class Server implements ServerInterface {
         configuration = new Configuration(this);
         stockManagement = new StockManagement(this);
         
-        //Default configuration, if not initialised it can cause null pointer exception in ServerWindo (title set up) - but we are not allowed to edit this
+        //Default configuration, if not initialised it can cause null pointer exception in ServerWindow (title set up) - but we are not allowed to edit this
 		Postcode restaurantPostcode = new Postcode("SO17 1BJ");
 		restaurant = new Restaurant("Sushi Restaurant",restaurantPostcode);
 		
@@ -101,7 +90,9 @@ public class Server implements ServerInterface {
 	
 	@Override
 	public void removeDish(Dish dish) throws UnableToDeleteException {
-	
+		if(stockManagement.isDishBeingRestocked(dish)) {
+			throw new UnableToDeleteException("Cannot delete dish which is currently being restocked");
+		}
 		this.dishes.remove(dish);
 		stockManagement.remove(dish);
 		this.notifyUpdate();
@@ -154,6 +145,7 @@ public class Server implements ServerInterface {
 		if(getUser(username)==null) {
 			User newUser = new User(username, password, address, postcode);
 			this.users.add(newUser);
+			System.out.println(users);
 			this.notifyUpdate();
 			return newUser;
 		} else {
@@ -162,9 +154,13 @@ public class Server implements ServerInterface {
 	}
 	
 	@Override
-	public void removeIngredient(Ingredient ingredient) {
-		int index = this.ingredients.indexOf(ingredient);
-		this.ingredients.remove(index);
+	public void removeIngredient(Ingredient ingredient) throws UnableToDeleteException{
+		for(Dish d : dishes) {
+			if(d.getRecipe().containsKey(ingredient)) {
+				throw new UnableToDeleteException("Cannot delete ingredient used in a dish");
+			}
+		}
+		this.ingredients.remove(ingredient);
 		stockManagement.remove(ingredient);
 		this.notifyUpdate();
 	}
@@ -202,9 +198,11 @@ public class Server implements ServerInterface {
 	}
 
 	@Override
-	public void removeDrone(Drone drone) {
-		int index = this.drones.indexOf(drone);
-		this.drones.remove(index);
+	public void removeDrone(Drone drone) throws UnableToDeleteException{
+		if(!drone.getStatus().equals("Idle")) {
+			throw new UnableToDeleteException("You can't delete flying drone");
+		}
+		this.drones.remove(drone);
 		this.notifyUpdate();
 	}
 
@@ -219,13 +217,16 @@ public class Server implements ServerInterface {
 		this.staff.add(mock);
 		mock.setStockManagement(stockManagement);
 		Thread newWorker = new Thread(mock);
-		this.allThreads.add(newWorker);
+		mock.setThreadInstance(newWorker);
 		newWorker.start();
 		return mock;
 	}
 
 	@Override
-	public void removeStaff(Staff staff) {
+	public void removeStaff(Staff staff) throws UnableToDeleteException {
+		if(!staff.getStatus().equals("Idle")) {
+			throw new UnableToDeleteException("Cannot delete staff who is currently working");
+		}
 		this.staff.remove(staff);
 		this.notifyUpdate();
 	}
@@ -263,8 +264,7 @@ public class Server implements ServerInterface {
 
 	@Override
 	public Number getOrderDistance(Order order) {
-		Order mock = (Order)order;
-		return mock.getDistance();
+		return order.getDistance();
 	}
 
 	@Override
@@ -294,7 +294,7 @@ public class Server implements ServerInterface {
 
 	@Override
 	public Postcode addPostcode(String code) {
-		Postcode mock = new Postcode(code);
+		Postcode mock = new Postcode(code, restaurant);
 		this.postcodes.add(mock);
 		this.notifyUpdate();
 		return mock;
@@ -314,6 +314,16 @@ public class Server implements ServerInterface {
 
 	@Override
 	public void removePostcode(Postcode postcode) throws UnableToDeleteException {
+		for(Supplier s : suppliers) {
+			if(s.getPostcode().equals(postcode)) {
+				throw new UnableToDeleteException("Postcode used by supplier");
+			}
+		}
+		for(User u : users) {
+			if(u.getPostcode().equals(postcode)) {
+				throw new UnableToDeleteException("Postcode used by user");
+			}
+		}
 		this.postcodes.remove(postcode);
 		this.notifyUpdate();
 	}
@@ -362,12 +372,7 @@ public class Server implements ServerInterface {
 	
 	@Override
 	public String getDroneStatus(Drone drone) {
-		Random rand = new Random();
-		if(rand.nextBoolean()) {
-			return "Idle";
-		} else {
-			return "Flying";
-		}
+		return drone.getStatus();
 	}
 	
 	@Override
@@ -416,7 +421,11 @@ public class Server implements ServerInterface {
 	
 	@Override
 	public void notifyUpdate() {
-		this.listeners.forEach(listener -> listener.updated(new UpdateEvent()));
+		try {
+			this.listeners.forEach(listener -> listener.updated(new UpdateEvent()));
+		} catch (NullPointerException npe) {
+			
+		}
 		server.update();
 	}
 
@@ -535,18 +544,23 @@ public class Server implements ServerInterface {
 	 * @return reference to {@link Dish} object with a given name, null when not found
 	 */
 	public User getUser(String user) {
+		System.out.println("Searching for user named: " + user);
 		for(User u : users) {
+			System.out.println("checking user: " + u.getName());
 			if(u.getName().equals(user)) {
 				return u;
 			}
 		}
+		System.out.println("returning null");
 		return null;
 	}
 	
 	public User getUser(int connectionId) {
 		for(User u : users) {
-			if(u.getConnectionId().equals(connectionId)) {
-				return u;
+			if(u.getConnectionId()!=null) {
+				if(u.getConnectionId().equals(connectionId)) {
+					return u;
+				}
 			}
 		}
 		return null;

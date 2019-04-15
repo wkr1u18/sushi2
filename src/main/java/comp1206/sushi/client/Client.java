@@ -34,12 +34,10 @@ public class Client implements ClientInterface {
     private List<Dish> dishes;
     private List<Order> orders;
     private List<UpdateListener> listeners = new CopyOnWriteArrayList<UpdateListener>();
-    
     private Basket userBasket;
-    Postcode postcode1 = new Postcode("SO17 1AW");
-    Restaurant restaurant;
+    private Restaurant restaurant;
     
-    Dish myDish = new Dish("aa", "asdasd", 23, 2, 5);
+
 	public Client() {
         logger.info("Starting up client...");
         commsClient = new CommsClient(this);
@@ -84,6 +82,7 @@ public class Client implements ClientInterface {
 		while(!commsClient.isUserReady()) {
 		}
 		user = commsClient.getUser();
+		System.out.println(user.getName());
 		commsClient.resetUserReady();
 		return user;
 		
@@ -165,8 +164,6 @@ public class Client implements ClientInterface {
 		userBasket.addDishToBasket(dish, quantity);
 		Message m = new MessageBasket("ADD-DISH",dish.getName(), quantity);
 		commsClient.sendMessage(m);
-		//userBasket.addDishToBasket(dish, quantity);
-
 	}
 
 	@Override
@@ -237,6 +234,9 @@ public class Client implements ClientInterface {
 
 	@Override
 	public void notifyUpdate() {
+		/*
+		 * I found a bug in ClientWindow implementation, and ignoring the NullPointerException solves the issue
+		 */
 		try {
 			this.listeners.forEach(listener -> listener.updated(new UpdateEvent()));
 		} catch (NullPointerException np) {

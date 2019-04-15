@@ -19,6 +19,7 @@ public class Drone extends Model {
 		this.setSpeed(speed);
 		this.setCapacity(1);
 		this.setBattery(100);
+		this.setStatus("Idle");
 	}
 
 	public Number getSpeed() {

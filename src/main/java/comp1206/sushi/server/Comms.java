@@ -197,7 +197,6 @@ public class Comms implements Runnable{
 					checkoutBasket(connection.getID());
 					break;
 				case "GET-ORDERS":
-					System.out.println("SENDING ORDERS");
 					sendOrders(connection.getID());
 					break;
 				case "CLEAR-BASKET":

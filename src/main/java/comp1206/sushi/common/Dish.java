@@ -16,7 +16,6 @@ public class Dish extends Model {
 	private Map <Ingredient,Number> recipe;
 	private Number restockThreshold;
 	private Number restockAmount;
-	private Integer currentlyPrepared;
 
 	public Dish() {
 		
@@ -29,27 +28,14 @@ public class Dish extends Model {
 		this.restockThreshold = restockThreshold;
 		this.restockAmount = restockAmount;
 		this.recipe = new ConcurrentHashMap<Ingredient,Number>();
-		this.currentlyPrepared = 0;
 		
 	}
 	
-	public void notifyThatIsPrepared() {
-		synchronized(currentlyPrepared) {
-			currentlyPrepared++;
-		}
-	}
-	public void notifyThatIsFinished() {
-		synchronized(currentlyPrepared) {
-			currentlyPrepared--;
-		}
-	}
 	
 	public synchronized void setStock(Number newStock) {
 		this.restockAmount = newStock;
 	}
 	
-
-
 	public synchronized String getName() {
 		return name;
 	}

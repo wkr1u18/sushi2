@@ -15,11 +15,20 @@ public class Staff extends Model implements Runnable{
 	private volatile boolean shutdown = false;
 	private StockManagement stockManagement;
 	private Random generator;
+	private Thread threadInstance; 
 	
 	public Staff(String name) {
 		this.setName(name);
 		this.setFatigue(0);
 		generator = new Random();
+	}
+	
+	public synchronized void setThreadInstance(Thread threadInstance) {
+		this.threadInstance = threadInstance;
+	}
+	
+	public synchronized Thread getThreadInstace() {
+		return this.threadInstance;
 	}
 
 	public synchronized String getName() {
@@ -66,7 +75,7 @@ public class Staff extends Model implements Runnable{
 					this.setStatus("Restocking " + nextDish.getName());
 					System.out.println(this.getName() + " is restocking " + nextDish.getName());
 					try {
-						Thread.sleep(generator.nextInt(12)*1);
+						Thread.sleep((generator.nextInt(40)+20)*1000);
 					} catch (InterruptedException ie) {
 						
 					}
@@ -76,7 +85,6 @@ public class Staff extends Model implements Runnable{
 				}
 				else {
 					this.setStatus("Idle");
-					//this.shutdown();
 				}
 
 		}
