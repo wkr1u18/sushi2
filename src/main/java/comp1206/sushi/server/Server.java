@@ -32,6 +32,7 @@ public class Server implements ServerInterface {
 	public List<Postcode> postcodes = new CopyOnWriteArrayList<Postcode>();
 	private List<UpdateListener> listeners = new CopyOnWriteArrayList<UpdateListener>();
 	private List<Thread>allThreads = new CopyOnWriteArrayList<Thread>();
+	private Comms server;
 	
 	private Map<Integer, User> userClientBinding = new ConcurrentHashMap<Integer, User>();
 	
@@ -71,7 +72,7 @@ public class Server implements ServerInterface {
 		Postcode restaurantPostcode = new Postcode("SO17 1BJ");
 		restaurant = new Restaurant("Sushi Restaurant",restaurantPostcode);
 		
-		Comms server = new Comms(this);
+		server = new Comms(this);
 		Thread serverThread = new Thread(server);
 		serverThread.setName("Server");
 		serverThread.run();
@@ -416,6 +417,7 @@ public class Server implements ServerInterface {
 	@Override
 	public void notifyUpdate() {
 		this.listeners.forEach(listener -> listener.updated(new UpdateEvent()));
+		server.update();
 	}
 
 	@Override
@@ -454,12 +456,10 @@ public class Server implements ServerInterface {
 	}
 	
 	public void createBasket(User user) {
-		System.out.println("Creating basket");
 		baskets.put(user, new Basket());
 	}
 	
 	public void removeBasket(User user) {
-		System.out.println("Deleting basket");
 		baskets.remove(user);
 	}
 	

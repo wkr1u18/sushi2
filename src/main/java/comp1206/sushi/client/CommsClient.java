@@ -86,12 +86,16 @@ public class CommsClient implements Runnable {
 					}
 					break;
 				case "DISHES":
-					dishes  = (List<Dish>) msg.getAttachement();
+					if(dishes==null) {
+						dishes  = (List<Dish>) msg.getAttachement();
+					} else {
+						dishes  = (List<Dish>) msg.getAttachement();
+						clientInterface.notifyUpdate();
+					}
 					break;
 				case "ORDERS":
 					if(orders!=null) {
 						orders = (List<Order>) msg.getAttachement();
-						System.out.println("i got here");
 						clientInterface.notifyUpdate();
 					}
 					else {

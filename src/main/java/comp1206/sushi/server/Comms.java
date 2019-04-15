@@ -28,9 +28,11 @@ import comp1206.sushi.common.MessageWithAttachement;
 import comp1206.sushi.common.Order;
 import comp1206.sushi.common.Postcode;
 import comp1206.sushi.common.Registration;
+import comp1206.sushi.common.UpdateEvent;
+import comp1206.sushi.common.UpdateListener;
 import comp1206.sushi.common.User;
 
-public class Comms implements Runnable {
+public class Comms implements Runnable{
 
 	public final static int WRITE_BUFER = 256 * 1024;
 	public final static int READ_BUFFER = 256 * 1024;
@@ -126,7 +128,7 @@ public class Comms implements Runnable {
 		User basketOwner = serverInterface.getUser(userId);
 		Basket userBasket = serverInterface.getBasket(basketOwner);
 		serverInterface.addOrder(basketOwner, userBasket.getContents());
-		serverInterface.notifyUpdate();
+		//serverInterface.notifyUpdate();
 	}
 	
 	public synchronized void addDishToBasket(Message m, int id) {
@@ -167,6 +169,7 @@ public class Comms implements Runnable {
 		MessageWithAttachement msg = new MessageWithAttachement("ORDERS", ordersToBeSent);
 		sendMessageTo(msg, connectionId);
 	}
+	
 	
 	class ServerListener extends Listener {
 		@Override
@@ -249,6 +252,19 @@ public class Comms implements Runnable {
 				}
 			}
 		}
+	}
+
+	public void update() {
+		List<User> users = serverInterface.getUsers();
+		for(User u : users) {
+			Integer connectionId = u.getConnectionId();
+			if(connectionId!=null) {
+				sendOrders(connectionId);
+				sendDishes(connectionId);
+			}
+		}
+		
+		
 	}
 
 }
