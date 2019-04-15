@@ -37,6 +37,10 @@ public class Server implements ServerInterface {
 			s.shutdown();
 			s.getThreadInstace().stop();
 		}
+		for(Drone d : drones) {
+			d.shutdown();
+			d.getThreadInstace().stop();
+		}
 		stockManagement = new StockManagement(this); 
 		dishes.clear();
 		drones.clear();
@@ -194,6 +198,10 @@ public class Server implements ServerInterface {
 	public Drone addDrone(Number speed) {
 		Drone mock = new Drone(speed);
 		this.drones.add(mock);
+		mock.setStockManagement(stockManagement);
+		Thread newWorker = new Thread(mock);
+		mock.setThreadInstance(newWorker);
+		newWorker.start();
 		return mock;
 	}
 
@@ -202,6 +210,7 @@ public class Server implements ServerInterface {
 		if(!drone.getStatus().equals("Idle")) {
 			throw new UnableToDeleteException("You can't delete flying drone");
 		}
+		drone.shutdown();
 		this.drones.remove(drone);
 		this.notifyUpdate();
 	}
@@ -227,6 +236,7 @@ public class Server implements ServerInterface {
 		if(!staff.getStatus().equals("Idle")) {
 			throw new UnableToDeleteException("Cannot delete staff who is currently working");
 		}
+		staff.shutdown();
 		this.staff.remove(staff);
 		this.notifyUpdate();
 	}

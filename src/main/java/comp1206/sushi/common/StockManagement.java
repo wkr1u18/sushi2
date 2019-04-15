@@ -184,5 +184,13 @@ public class StockManagement {
 			dishStock.put(d, (Integer) dishStock.get(d) + (Integer) d.getRestockAmount());
 		}
 	}
+	
+	public synchronized Ingredient getNextIngredient() {
+		return null;
+	}
+	
+	public synchronized Order getNextOrder() {
+		return null;
+	}
 
 }
