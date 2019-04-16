@@ -1,5 +1,6 @@
 package comp1206.sushi.common;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -9,8 +10,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * 
  * You are not permitted to modify this model, but you can extend it.
  */
-public abstract class Model {
+public abstract class Model implements Serializable{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	protected String name;
 	private transient List<UpdateListener> updateListeners = new CopyOnWriteArrayList<UpdateListener>();
 	

@@ -1,16 +1,22 @@
 package comp1206.sushi.common;
 
+import java.io.Serializable;
+
 import comp1206.sushi.common.Postcode;
 import comp1206.sushi.common.User;
 
-public class User extends Model {
+public class User extends Model implements Serializable{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private String name;
 	private String password;
 	private String address;
 	private Postcode postcode;
 	
-	private Integer connectionId;
+	private transient Integer connectionId;
 	
 	public User() {
 		

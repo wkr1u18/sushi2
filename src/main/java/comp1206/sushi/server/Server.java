@@ -1,5 +1,12 @@
 package comp1206.sushi.server;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -62,26 +69,60 @@ public class Server implements ServerInterface, UpdateListener {
 	
 	public Server() {
         logger.info("Starting up server...");
-        
         configuration = new Configuration(this);
-        stockManagement = new StockManagement(this);
-        
-        Thread stockManagementThread = new Thread(stockManagement);
-        stockManagement.setThreadInstance(stockManagementThread);
-        stockManagementThread.start();
-        
-        //Default configuration, if not initialised it can cause null pointer exception in ServerWindow (title set up) - but we are not allowed to edit this
-		Postcode restaurantPostcode = new Postcode("SO17 1BJ");
-		restaurant = new Restaurant("Sushi Restaurant",restaurantPostcode);
-		
 		server = new Comms(this);
 		Thread serverThread = new Thread(server);
 		serverThread.setName("Server");
 		serverThread.run();
-		
-		while(!server.isReady()) {
-			Thread.yield();
+        loadPersistence();
+        defaultConfiguration();
+	}
+	
+	public void loadPersistence() {
+		File f = new File("persistence.db");
+		FileInputStream fis;
+		ObjectInputStream ois;
+		try {
+			fis = new FileInputStream(f);
+			ois = new ObjectInputStream(fis);
+			System.out.println("Persistence found, loading...");
+			
+			Persistence persistence = (Persistence) ois.readObject();
+			this.restaurant = persistence.getRestaurant();
+			this.postcodes = new CopyOnWriteArrayList<Postcode>(persistence.getPostcodes());
+			this.suppliers = new CopyOnWriteArrayList<Supplier>(persistence.getSuppliers());
+			this.ingredients = new CopyOnWriteArrayList<Ingredient>(persistence.getIngredients());
+			this.dishes = new CopyOnWriteArrayList<Dish>(persistence.getDishes());
+			this.users = new CopyOnWriteArrayList<User>(persistence.getUsers());
+			this.notifyUpdate();
+			
+			
+		} catch(FileNotFoundException notFound) {
+			System.out.println("No persistence found - loading default configuration");
+			defaultConfiguration();
+		} catch(IOException ioe) {
+			ioe.printStackTrace();
+		} catch (ClassNotFoundException cnfe) {
+			cnfe.printStackTrace();
 		}
+		
+	}
+	
+	
+	public void defaultConfiguration() {
+		 stockManagement = new StockManagement(this);
+	        
+	        Thread stockManagementThread = new Thread(stockManagement);
+	        stockManagement.setThreadInstance(stockManagementThread);
+	        stockManagementThread.start();
+	        
+	        //Default configuration, if not initialised it can cause null pointer exception in ServerWindow (title set up) - but we are not allowed to edit this
+			Postcode restaurantPostcode = new Postcode("SO17 1BJ");
+			restaurant = new Restaurant("Sushi Restaurant",restaurantPostcode);
+			
+			while(!server.isReady()) {
+				Thread.yield();
+			}
 	}
 	
 
@@ -388,6 +429,7 @@ public class Server implements ServerInterface, UpdateListener {
 		System.out.println("Loaded configuration: " + filename);
 		configuration.loadConfiguration(filename);
 		this.notifyUpdate();
+		testPersistence();
 	}
 
 	@Override
@@ -627,6 +669,38 @@ public class Server implements ServerInterface, UpdateListener {
 	public void cancelOrder(Order o) {
 		stockManagement.cancelOrder(o);
 		
+	}
+	
+	
+	public void testPersistence() {
+		File f = new File("persistence.db");
+		FileOutputStream fos;
+		FileInputStream fis;
+		ObjectInputStream ois;
+		ObjectOutputStream oos;
+		try {
+			fos = new FileOutputStream(f);
+			fis = new FileInputStream(f);
+			
+			oos = new ObjectOutputStream(fos);
+			ois = new ObjectInputStream(fis);
+			
+			Persistence newPersistence = new Persistence(this);
+			
+			oos.writeObject(newPersistence);
+			
+			Persistence readPersistence = (Persistence) ois.readObject();
+			Restaurant readRestaurant = readPersistence.getRestaurant();
+			System.out.println(readRestaurant.getName() + " " + readRestaurant.getLocation());
+			List<Postcode> readPostcodes = readPersistence.getPostcodes();
+			for(Postcode p : readPostcodes) {
+				System.out.println(p + " " + p.getDistance());
+			}
+			fos.close();
+			fis.close();
+		} catch (Exception ioe) {
+			ioe.printStackTrace();
+		}
 	}
 
 }

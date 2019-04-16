@@ -15,7 +15,7 @@ public class Staff extends Model implements Runnable{
 	private volatile boolean shutdown = false;
 	private StockManagement stockManagement;
 	private Random generator;
-	private Thread threadInstance; 
+	private transient Thread threadInstance; 
 	
 	public Staff(String name) {
 		this.setName(name);

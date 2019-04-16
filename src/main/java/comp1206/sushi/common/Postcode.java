@@ -3,6 +3,7 @@ package comp1206.sushi.common;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -13,8 +14,12 @@ import java.util.regex.Pattern;
 
 import comp1206.sushi.common.Postcode;
 
-public class Postcode extends Model {
+public class Postcode extends Model implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private String name;
 	private Map<String,Double> latLong;
 	private Number distance;
