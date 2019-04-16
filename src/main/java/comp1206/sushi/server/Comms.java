@@ -226,8 +226,10 @@ public class Comms implements Runnable{
 					User userObject = serverInterface.addUser(mru.getName(), mru.getPassword(), mru.getAddress(), mru.getPostcode());
 					if(userObject!=null) {
 						userObject.setConnectionId(connection.getID());
+						//I did change here
+						serverInterface.createBasket(userObject);
 					}
-					serverInterface.createBasket(userObject);
+					//This line was originally here
 					sendUser(userObject, connection.getID());
 					break;
 				case "LOGIN":
@@ -239,10 +241,10 @@ public class Comms implements Runnable{
 							if(loginUser.getConnectionId()==null) {
 								loginUser.setConnectionId(connection.getID());
 								loginResponse = loginUser;
+								serverInterface.createBasket(loginUser);
 							}
 						}
 					}
-					serverInterface.createBasket(loginUser);
 					sendUser(loginResponse, connection.getID());
 					sendOrders(connection.getID());
 					break;

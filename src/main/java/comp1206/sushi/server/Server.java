@@ -453,7 +453,7 @@ public class Server implements ServerInterface, UpdateListener {
 		System.out.println("Loaded configuration: " + filename);
 		configuration.loadConfiguration(filename);
 		this.notifyUpdate();
-		testPersistence();
+		
 	}
 
 	@Override
@@ -536,6 +536,7 @@ public class Server implements ServerInterface, UpdateListener {
 			
 		}
 		server.update();
+		savePersistence();
 	}
 
 	@Override
@@ -696,18 +697,17 @@ public class Server implements ServerInterface, UpdateListener {
 	}
 	
 	
-	public void testPersistence() {
+	public void savePersistence() {
 		File f = new File("persistence.db");
 		FileOutputStream fos;
-		FileInputStream fis;
-		ObjectInputStream ois;
+
 		ObjectOutputStream oos;
 		try {
 			fos = new FileOutputStream(f);
-			fis = new FileInputStream(f);
+
 			
 			oos = new ObjectOutputStream(fos);
-			ois = new ObjectInputStream(fis);
+	
 			
 			Persistence newPersistence = new Persistence(this);
 			newPersistence.setStockManagement(stockManagement);
@@ -715,10 +715,12 @@ public class Server implements ServerInterface, UpdateListener {
 			
 
 			fos.close();
-			fis.close();
+	
 		} catch (Exception ioe) {
 			ioe.printStackTrace();
 		}
 	}
+	
+
 
 }
