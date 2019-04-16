@@ -11,7 +11,7 @@ import comp1206.sushi.common.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
  
-public class Server implements ServerInterface {
+public class Server implements ServerInterface, UpdateListener {
 
     private static final Logger logger = LogManager.getLogger("Server");
 	
@@ -330,7 +330,7 @@ public class Server implements ServerInterface {
 		this.orders.add(newOrder);
 		stockManagement.trackOrder(newOrder);
 		this.notifyUpdate();
-		newOrder.addUpdateListener(server);
+		newOrder.addUpdateListener(this);
 		return newOrder;
 	}
 	
@@ -596,6 +596,12 @@ public class Server implements ServerInterface {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public void updated(UpdateEvent updateEvent) {
+		this.notifyUpdate();
+		
 	}
 
 }

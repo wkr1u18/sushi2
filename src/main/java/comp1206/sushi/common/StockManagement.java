@@ -183,8 +183,7 @@ public class StockManagement implements Runnable {
 						Integer weNeed = (Integer) entry.getValue() * (Integer) d.getRestockAmount();
 						Integer weHave = (Integer) ingredientStock.get(entry.getKey());
 						if(weNeed > weHave) {
-							//Not enough ingredients
-							return null;
+							continue;
 						}
 					}
 				}

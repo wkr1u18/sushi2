@@ -32,7 +32,7 @@ import comp1206.sushi.common.UpdateEvent;
 import comp1206.sushi.common.UpdateListener;
 import comp1206.sushi.common.User;
 
-public class Comms implements Runnable, UpdateListener{
+public class Comms implements Runnable{
 
 	public final static int WRITE_BUFER = 256 * 1024;
 	public final static int READ_BUFFER = 256 * 1024;
@@ -128,6 +128,7 @@ public class Comms implements Runnable, UpdateListener{
 		User basketOwner = serverInterface.getUser(userId);
 		Basket userBasket = serverInterface.getBasket(basketOwner);
 		serverInterface.addOrder(basketOwner, userBasket.getContents());
+		userBasket.clearBasket();
 		//serverInterface.notifyUpdate();
 	}
 	
@@ -266,10 +267,5 @@ public class Comms implements Runnable, UpdateListener{
 		
 	}
 
-	@Override
-	public void updated(UpdateEvent updateEvent) {
-		update();
-		
-	}
 
 }
