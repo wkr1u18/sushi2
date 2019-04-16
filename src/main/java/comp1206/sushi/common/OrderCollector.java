@@ -1,9 +1,14 @@
 package comp1206.sushi.common;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class OrderCollector {
+public class OrderCollector implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Order order;
 	private Map<Dish, Number> soFar;
 	public OrderCollector(Order order) {

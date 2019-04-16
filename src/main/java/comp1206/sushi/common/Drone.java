@@ -1,27 +1,36 @@
 package comp1206.sushi.common;
 
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+
 import com.esotericsoftware.kryonet.Server;
 
 import comp1206.sushi.common.Drone;
 import comp1206.sushi.server.ServerInterface;
 
-public class Drone extends Model implements Runnable {
+public class Drone extends Model implements Runnable, Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Number speed;
-	private Number progress;
+	private transient Number progress;
 	
 	private Number capacity;
 	private Number battery;
 	
-	private String status;
+	private transient String status;
 	
-	private Postcode source;
-	private Postcode destination;
+	private transient Postcode source;
+	private transient Postcode destination;
 
 	private volatile boolean shutdown = false;
-	private Thread threadInstance; 
-	private StockManagement stockManagement;
-	private ServerInterface server;
+	
+	
+	private transient Thread threadInstance; 
+	private transient StockManagement stockManagement;
+	private transient ServerInterface server;
 	
 	public synchronized void setThreadInstance(Thread threadInstance) {
 		this.threadInstance = threadInstance;
@@ -180,6 +189,10 @@ public class Drone extends Model implements Runnable {
 
 		}
 		
+	}
+	private void readObject(ObjectInputStream in) throws Exception {
+		in.defaultReadObject();
+		status="Idle";
 	}
 	
 }

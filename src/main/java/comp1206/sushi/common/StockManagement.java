@@ -1,5 +1,6 @@
 package comp1206.sushi.common;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,18 +11,23 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import comp1206.sushi.server.ServerInterface;
 
-public class StockManagement implements Runnable {
+public class StockManagement implements Runnable, Serializable {
 
-	private ServerInterface server;
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private Map<Dish, Number> dishStock;
 	private Map<Ingredient,Number> ingredientStock;
-	private Map<Dish, Integer> dishesBeingRestocked;
-	private Map<Ingredient, Integer> ingredientsBeingRestocked;
+	private transient Map<Dish, Integer> dishesBeingRestocked;
+	private transient Map<Ingredient, Integer> ingredientsBeingRestocked;
 	private List<OrderCollector> orderCollectors;
-	private Thread threadInstance;
+	private transient Thread threadInstance;
 	private volatile boolean shutdown = false;
 	
+	
+	private transient ServerInterface server;
 	private volatile boolean dishRestockingEnabled;
 	private volatile boolean ingredientsRestockingEnabled;
 	
@@ -35,6 +41,27 @@ public class StockManagement implements Runnable {
 		dishRestockingEnabled = true;
 		ingredientsRestockingEnabled = true;
 		this.server = server;
+	}
+	
+	public void initialise(ServerInterface server) {
+		this.server = server;
+		
+		ingredientsBeingRestocked = Collections.synchronizedMap(new HashMap<Ingredient, Integer>());
+		dishesBeingRestocked = Collections.synchronizedMap(new HashMap<Dish, Integer>());
+		
+		List<Ingredient> ingredients = server.getIngredients();
+		for(Ingredient i : ingredients) {
+			synchronized(ingredientsBeingRestocked) {
+				ingredientsBeingRestocked.put(i, 0);
+			}
+		}
+		
+		List<Dish> dishes = server.getDishes();
+		for(Dish d : dishes) {
+			synchronized(dishesBeingRestocked) {
+				dishesBeingRestocked.put(d, 0);
+			}
+		}
 	}
 	
 	public synchronized void setThreadInstance(Thread threadInstance) {

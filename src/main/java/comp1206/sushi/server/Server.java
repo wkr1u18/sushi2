@@ -74,8 +74,11 @@ public class Server implements ServerInterface, UpdateListener {
 		Thread serverThread = new Thread(server);
 		serverThread.setName("Server");
 		serverThread.run();
+		while(!server.isReady()) {
+			Thread.yield();
+		}
         loadPersistence();
-        defaultConfiguration();
+        System.out.println("Server ready");
 	}
 	
 	public void loadPersistence() {
@@ -89,14 +92,38 @@ public class Server implements ServerInterface, UpdateListener {
 			
 			Persistence persistence = (Persistence) ois.readObject();
 			this.restaurant = persistence.getRestaurant();
-			this.postcodes = new CopyOnWriteArrayList<Postcode>(persistence.getPostcodes());
-			this.suppliers = new CopyOnWriteArrayList<Supplier>(persistence.getSuppliers());
-			this.ingredients = new CopyOnWriteArrayList<Ingredient>(persistence.getIngredients());
-			this.dishes = new CopyOnWriteArrayList<Dish>(persistence.getDishes());
-			this.users = new CopyOnWriteArrayList<User>(persistence.getUsers());
+			this.postcodes = persistence.getPostcodes();
+			this.suppliers = persistence.getSuppliers();
+			this.ingredients = persistence.getIngredients();
+			this.dishes = persistence.getDishes();
+			this.stockManagement = persistence.getStockManagement();
+			this.stockManagement.initialise(this);
+			this.users = persistence.getUsers();
+			this.orders = persistence.getOrders();
+			this.drones = persistence.getDrones();
+			this.staff = persistence.getStaff();
+			for(Drone d : drones) {
+				d.setServer(this);
+				d.setStockManagement(stockManagement);
+				Thread newWorker = new Thread(d);
+				d.setThreadInstance(newWorker);
+				newWorker.start();
+				
+			}
+			for(Staff s : staff) {
+				s.setStockManagement(stockManagement);
+				Thread newWorker = new Thread(s);
+				s.setThreadInstance(newWorker);
+				newWorker.start();
+			}
+			
+			Thread stockManagementThread = new Thread(stockManagement);
+			stockManagement.setThreadInstance(stockManagementThread);
+			stockManagementThread.start();
+			for(Order o : orders) {
+				o.addUpdateListener(this);
+			}	
 			this.notifyUpdate();
-			
-			
 		} catch(FileNotFoundException notFound) {
 			System.out.println("No persistence found - loading default configuration");
 			defaultConfiguration();
@@ -120,9 +147,6 @@ public class Server implements ServerInterface, UpdateListener {
 			Postcode restaurantPostcode = new Postcode("SO17 1BJ");
 			restaurant = new Restaurant("Sushi Restaurant",restaurantPostcode);
 			
-			while(!server.isReady()) {
-				Thread.yield();
-			}
 	}
 	
 
@@ -686,16 +710,10 @@ public class Server implements ServerInterface, UpdateListener {
 			ois = new ObjectInputStream(fis);
 			
 			Persistence newPersistence = new Persistence(this);
-			
+			newPersistence.setStockManagement(stockManagement);
 			oos.writeObject(newPersistence);
 			
-			Persistence readPersistence = (Persistence) ois.readObject();
-			Restaurant readRestaurant = readPersistence.getRestaurant();
-			System.out.println(readRestaurant.getName() + " " + readRestaurant.getLocation());
-			List<Postcode> readPostcodes = readPersistence.getPostcodes();
-			for(Postcode p : readPostcodes) {
-				System.out.println(p + " " + p.getDistance());
-			}
+
 			fos.close();
 			fis.close();
 		} catch (Exception ioe) {

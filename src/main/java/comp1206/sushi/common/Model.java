@@ -1,5 +1,6 @@
 package comp1206.sushi.common;
 
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
@@ -80,6 +81,12 @@ public abstract class Model implements Serializable{
 		for(UpdateListener listener : updateListeners) {
 			listener.updated(new UpdateEvent(this,property,oldValue,newValue));
 		}				
+	}
+	
+	private void readObject(ObjectInputStream in) throws Exception {
+		in.defaultReadObject();
+		updateListeners = new CopyOnWriteArrayList<UpdateListener>();
+		
 	}
 
 	

@@ -20,6 +20,10 @@ public class Persistence implements Serializable{
 	private List<Ingredient> ingredients;
 	private List<Dish> dishes;
 	private List<User> users;
+	private StockManagement stockManagement;
+	private List<Order> orders;
+	private List<Drone> drones;
+	private List<Staff> staff;
 	
 	public Persistence(ServerInterface server) {
 		this.server = server;
@@ -29,6 +33,13 @@ public class Persistence implements Serializable{
 		ingredients = server.getIngredients();
 		dishes = server.getDishes();
 		users = server.getUsers();
+		orders = server.getOrders();
+		drones = server.getDrones();
+		staff = server.getStaff();
+	}
+	
+	public void setStockManagement(StockManagement stockManagement) {
+		this.stockManagement = stockManagement;
 	}
 	
 	public Restaurant getRestaurant() {
@@ -54,5 +65,20 @@ public class Persistence implements Serializable{
 		return users;
 	}
 	
+	public StockManagement getStockManagement() {
+		return stockManagement;
+	}
+	
+	public List<Order> getOrders() {
+		return orders;
+	}
+	
+	public List<Drone> getDrones() {
+		return drones;
+	}
+	
+	public List<Staff> getStaff() {
+		return staff;
+	}
 
 }

@@ -1,5 +1,6 @@
 package comp1206.sushi.common;
 
+import java.io.ObjectInputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -13,8 +14,10 @@ public class Staff extends Model implements Runnable{
 	private String status;
 	private Number fatigue;
 	private volatile boolean shutdown = false;
-	private StockManagement stockManagement;
-	private Random generator;
+	
+	
+	private transient StockManagement stockManagement;
+	private transient Random generator;
 	private transient Thread threadInstance; 
 	
 	public Staff(String name) {
@@ -88,8 +91,11 @@ public class Staff extends Model implements Runnable{
 				}
 
 		}
-		
-		
+	}
+	private void readObject(ObjectInputStream in) throws Exception {
+		in.defaultReadObject();
+		generator = new Random();
+		status="Idle";
 	}
 
 }

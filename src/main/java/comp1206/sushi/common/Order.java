@@ -1,5 +1,8 @@
 package comp1206.sushi.common;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -9,8 +12,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import comp1206.sushi.common.Order;
 
-public class Order extends Model {
+public class Order extends Model implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private String status;
 	private User buyer;
 	private Map<Dish, Number> orderDetails = new ConcurrentHashMap<Dish, Number>();
@@ -83,6 +90,13 @@ public class Order extends Model {
 	
 	public Map<Dish, Number> getOrderDetails() {
 			return orderDetails;
+	}
+	
+	private void readObject(ObjectInputStream in) throws Exception {
+		in.defaultReadObject();
+		if(status.equals("Delivering")) {
+			status="Completed";
+		}
 	}
 	
 
