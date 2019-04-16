@@ -152,7 +152,7 @@ public class Comms implements Runnable{
 		MessageOrder messageOrder = (MessageOrder) m;
 		Order order = serverInterface.getOrder(messageOrder.getUsername(), messageOrder.getOrderName());
 		if(order!=null) {
-			order.cancelOrder();
+			serverInterface.cancelOrder(order);
 		}
 		else {
 			System.out.println("NO SUCH ORDER");

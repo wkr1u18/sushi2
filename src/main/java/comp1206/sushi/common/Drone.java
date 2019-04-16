@@ -125,9 +125,21 @@ public class Drone extends Model implements Runnable {
 				
 			}
 			soFar += this.getSpeed().intValue();
-			this.setProgress(Math.round(soFar*100/route.intValue()));
+			int progress = Math.round(soFar*100/route.intValue());
+			if(progress>100) {
+				progress=100;
+			}
+			this.setProgress(progress);
 		}
 		this.setStatus("Idle");
+	}
+	
+	public void deliverOrder(Order o) {
+		Postcode source = server.getRestaurantPostcode();
+		Postcode destination = o.getUser().getPostcode();
+		Number distance = o.getDistance();
+		fly(source, destination, distance);
+		fly(destination, source, distance);
 	}
 	
 	
@@ -158,6 +170,8 @@ public class Drone extends Model implements Runnable {
 			Order nextOrder = stockManagement.getNextOrder();
 			if(nextOrder!=null)
 			{
+				deliverOrder(nextOrder);
+				nextOrder.setStatus("Complete");
 				System.out.println("delivering order");
 			}
 			

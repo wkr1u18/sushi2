@@ -56,8 +56,9 @@ public class StockManagement implements Runnable {
 	}
 	
 	public void untrackOrder(Order o ) {
+		OrderCollector orderCollector = getOrderCollector(o);
 		synchronized(orderCollectors) {
-			orderCollectors.remove(o);
+			orderCollectors.remove(orderCollector);
 		}
 	}
 	
@@ -156,53 +157,61 @@ public class StockManagement implements Runnable {
 		}
 	}
 	
+	public synchronized Dish checkDish(Dish d) {
+		Integer prognosedAmount = 0;
+		Integer currentStock = 0;
+		Integer amount = 0;
+		synchronized(dishStock) {
+			currentStock = (Integer) dishStock.get(d);
+		}
+		synchronized(dishesBeingRestocked) {
+			amount = dishesBeingRestocked.get(d);
+		}
+		Integer restockAmount = (Integer) d.getRestockAmount();
+		Integer futureStock = amount*restockAmount;
+		prognosedAmount = currentStock + futureStock;
+		
+		if(prognosedAmount<(Integer) d.getRestockThreshold()) {
+			Map<Ingredient, Number> recipe = d.getRecipe();
+			//Iterate through recipe to check whether we have enough elements 
+			for(Map.Entry<Ingredient, Number> entry : recipe.entrySet()) {
+				synchronized(ingredientStock) {
+					Integer weNeed = (Integer) entry.getValue() * (Integer) d.getRestockAmount();
+					Integer weHave = (Integer) ingredientStock.get(entry.getKey());
+					if(weNeed > weHave) {
+						return null;
+					}
+				}
+			}
+			
+			for(Map.Entry<Ingredient, Number> entry : recipe.entrySet()) { 
+				Integer currentAmount;
+				synchronized(ingredientStock) {
+					currentAmount = (Integer) ingredientStock.get(entry.getKey());
+				}
+		
+				Integer weNeed = (Integer) recipe.get(entry.getKey()) * (Integer) d.getRestockAmount();
+				Integer newValue = currentAmount - weNeed;
+				synchronized(ingredientStock) {
+					ingredientStock.put(entry.getKey(), newValue);
+				}
+				
+			}
+			//Otherwise return the dish
+			return d;
+		}
+		return null;
+	}
+	
 	public synchronized Dish getNextDish() {
 		if(!dishRestockingEnabled) {
 			return null;
 		}
 		List<Dish> dishes = server.getDishes();
 		for(Dish d : dishes) {
-			Integer prognosedAmount = 0;
-			Integer currentStock = 0;
-			Integer amount = 0;
-			synchronized(dishStock) {
-				currentStock = (Integer) dishStock.get(d);
-			}
-			synchronized(dishesBeingRestocked) {
-				amount = dishesBeingRestocked.get(d);
-			}
-			Integer restockAmount = (Integer) d.getRestockAmount();
-			Integer futureStock = amount*restockAmount;
-			prognosedAmount = currentStock + futureStock;
-			
-			if(prognosedAmount<(Integer) d.getRestockThreshold()) {
-				Map<Ingredient, Number> recipe = d.getRecipe();
-				//Iterate through recipe to check whether we have enough elements 
-				for(Map.Entry<Ingredient, Number> entry : recipe.entrySet()) {
-					synchronized(ingredientStock) {
-						Integer weNeed = (Integer) entry.getValue() * (Integer) d.getRestockAmount();
-						Integer weHave = (Integer) ingredientStock.get(entry.getKey());
-						if(weNeed > weHave) {
-							continue;
-						}
-					}
-				}
-				
-				for(Map.Entry<Ingredient, Number> entry : recipe.entrySet()) { 
-					Integer currentAmount;
-					synchronized(ingredientStock) {
-						currentAmount = (Integer) ingredientStock.get(entry.getKey());
-					}
-			
-					Integer weNeed = (Integer) recipe.get(entry.getKey()) * (Integer) d.getRestockAmount();
-					Integer newValue = currentAmount - weNeed;
-					synchronized(ingredientStock) {
-						ingredientStock.put(entry.getKey(), newValue);
-					}
-					
-				}
-				//Otherwise return the dish
-				return d;
+			Dish result = checkDish(d);
+			if(result!=null) {
+				return result;
 			}
 		}
 		return null;
@@ -251,7 +260,43 @@ public class StockManagement implements Runnable {
 	}
 	
 	public synchronized Order getNextOrder() {
+		List<Order>orders = server.getOrders();
+		for(Order o : orders) {
+			if(o.getStatus()!=null) {
+				if(o.getStatus().equals("Collected")) {
+					o.setStatus("Delivering");
+					return o;
+				}
+			}
+		}
 		return null;
+	}
+	
+	public OrderCollector getOrderCollector(Order o) {
+		synchronized(orderCollectors) {
+			for(OrderCollector oc : orderCollectors) {
+				if(oc.getOrder()!=null) {
+					if(oc.getOrder().equals(o)) {
+						return oc;
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	public synchronized void cancelOrder(Order o) {
+		o.setStatus("Cancelling");
+		OrderCollector orderInformation = getOrderCollector(o);
+		untrackOrder(o);
+		for(Map.Entry<Dish, Number> entry : orderInformation.getCollectedSoFar().entrySet()) {
+			synchronized(dishStock) {
+				Integer current = dishStock.get(entry.getKey()).intValue();
+				Integer newValue = current + entry.getValue().intValue();
+				dishStock.put(entry.getKey(), newValue);	
+			}
+		}
+		o.setStatus("Cancelled");
 	}
 
 	@Override
@@ -290,7 +335,7 @@ public class StockManagement implements Runnable {
 									}
 									if(soFar.equals(details)) {
 										currentOrder.setStatus("Collected");
-										untrackOrder(currentOrder);
+										//untrackOrder(currentOrder);
 									}
 								}
 							}

@@ -257,10 +257,19 @@ public class Server implements ServerInterface, UpdateListener {
 	}
 
 	@Override
-	public void removeOrder(Order order) {
-		this.orders.remove(order);
-		stockManagement.untrackOrder(order);
-		this.notifyUpdate();
+	public void removeOrder(Order order) throws UnableToDeleteException {
+		if(order.getStatus()!=null) {
+			if(!order.getStatus().equals("Delivering")) {
+				if(order.getStatus().equals("Placed")||order.getStatus().equals("Collected")) {
+					cancelOrder(order);
+				}
+				this.orders.remove(order);
+				stockManagement.untrackOrder(order);
+				this.notifyUpdate();
+				return;
+			}
+		}
+		throw new UnableToDeleteException("Cannot delete order while delivering it");
 	}
 	
 	@Override
@@ -601,6 +610,11 @@ public class Server implements ServerInterface, UpdateListener {
 	@Override
 	public void updated(UpdateEvent updateEvent) {
 		this.notifyUpdate();
+		
+	}
+	
+	public void cancelOrder(Order o) {
+		stockManagement.cancelOrder(o);
 		
 	}
 

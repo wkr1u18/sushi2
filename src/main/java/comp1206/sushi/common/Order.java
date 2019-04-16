@@ -78,7 +78,7 @@ public class Order extends Model {
 	}
 	
 	public void cancelOrder() {
-		System.out.println("Cancelling order");
+		this.setStatus("Cancelled");
 	}
 	
 	public Map<Dish, Number> getOrderDetails() {
