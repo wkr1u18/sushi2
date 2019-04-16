@@ -366,7 +366,18 @@ public class Server implements ServerInterface, UpdateListener {
 	}
 	
 	@Override
-	public void removeUser(User user) {
+	public void removeUser(User user) throws UnableToDeleteException{ 
+		if(user.getConnectionId()!=null) {
+			throw new UnableToDeleteException("Cannot delete logged in user");
+		}
+		for(Order o: orders) {
+			if(o.getUser()!=null) {
+				if(o.getUser().equals(user)) {
+					throw new UnableToDeleteException("Cannot delete user with placed orders");
+				}
+			}
+		}
+		
 		this.users.remove(user);
 		this.notifyUpdate();
 	}
