@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public abstract class Model {
 	
 	protected String name;
-	private List<UpdateListener> updateListeners = new CopyOnWriteArrayList<UpdateListener>();
+	private transient List<UpdateListener> updateListeners = new CopyOnWriteArrayList<UpdateListener>();
 	
 
 	@Override

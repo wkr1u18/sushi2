@@ -1,14 +1,16 @@
 package comp1206.sushi.common;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import comp1206.sushi.server.ServerInterface;
 
-public class StockManagement {
+public class StockManagement implements Runnable {
 
 	private ServerInterface server;
 	
@@ -16,6 +18,9 @@ public class StockManagement {
 	private Map<Ingredient,Number> ingredientStock;
 	private Map<Dish, Integer> dishesBeingRestocked;
 	private Map<Ingredient, Integer> ingredientsBeingRestocked;
+	private List<OrderCollector> orderCollectors;
+	private Thread threadInstance;
+	private volatile boolean shutdown = false;
 	
 	private volatile boolean dishRestockingEnabled;
 	private volatile boolean ingredientsRestockingEnabled;
@@ -26,9 +31,34 @@ public class StockManagement {
 		ingredientStock = Collections.synchronizedMap(new HashMap<Ingredient, Number>());
 		dishesBeingRestocked = Collections.synchronizedMap(new HashMap<Dish, Integer>());
 		ingredientsBeingRestocked = Collections.synchronizedMap(new HashMap<Ingredient, Integer>());
+		orderCollectors = Collections.synchronizedList(new ArrayList<OrderCollector>());
 		dishRestockingEnabled = true;
 		ingredientsRestockingEnabled = true;
 		this.server = server;
+	}
+	
+	public synchronized void setThreadInstance(Thread threadInstance) {
+		this.threadInstance = threadInstance;
+	}
+	
+	public synchronized Thread getThreadInstace() {
+		return this.threadInstance;
+	}
+	
+	public void shutdown() {
+		shutdown=true;
+	}
+	
+	public void trackOrder(Order o) {
+		synchronized(orderCollectors) {
+			orderCollectors.add(new OrderCollector(o));
+		}
+	}
+	
+	public void untrackOrder(Order o ) {
+		synchronized(orderCollectors) {
+			orderCollectors.remove(o);
+		}
 	}
 	
 	public boolean isDishRestockingEnabled() {
@@ -186,11 +216,91 @@ public class StockManagement {
 	}
 	
 	public synchronized Ingredient getNextIngredient() {
+		if(!ingredientsRestockingEnabled) {
+			return null;
+		}
+		
+		List<Ingredient> ingredients = server.getIngredients();
+		for(Ingredient i : ingredients) {
+			Integer prognosedAmount = 0;
+			Integer currentStock = 0;
+			Integer amount = 0;
+			
+			synchronized(ingredientStock) {
+				currentStock = (Integer) ingredientStock.get(i).intValue();
+			}
+			
+			synchronized(ingredientsBeingRestocked) {
+				amount = (Integer) ingredientsBeingRestocked.get(i).intValue();
+			}
+			
+			Integer restockAmount = (Integer) i.getRestockAmount().intValue();
+			Integer futureStock = amount * restockAmount;
+			prognosedAmount = currentStock + futureStock;
+			if(prognosedAmount<i.getRestockThreshold().intValue()) {
+				return i;
+			}
+		}
+		
 		return null;
+	}
+	
+	public void restockIngredient(Ingredient i) {
+		synchronized(ingredientStock) {
+			ingredientStock.put(i, ingredientStock.get(i).intValue() + i.getRestockAmount().intValue());
+		}
 	}
 	
 	public synchronized Order getNextOrder() {
 		return null;
+	}
+
+	@Override
+	public void run() {
+		while(!shutdown) {
+			synchronized(orderCollectors) {
+				for(OrderCollector oc : orderCollectors) {
+					Order currentOrder = oc.getOrder();
+					if(currentOrder.getStatus().equals("Placed")) {
+						Map<Dish, Number> details = currentOrder.getOrderDetails();
+						Map<Dish, Number> soFar = oc.getCollectedSoFar();
+						for(Map.Entry<Dish, Number> entry : details.entrySet()) {
+							Dish currentDish = entry.getKey();
+							Integer weNeed = entry.getValue().intValue();
+							Integer weHaveCollected = soFar.get(entry.getKey()).intValue();
+							Integer weHaveToTake = weNeed - weHaveCollected;
+							if(weHaveToTake>0) {
+								Integer currentAmountOfDish;
+								synchronized(dishStock) {
+									currentAmountOfDish = dishStock.get(currentDish).intValue();
+								}
+								if(currentAmountOfDish>0) {
+									if(currentAmountOfDish>=weHaveToTake) {
+										System.out.println("Taking " + weHaveToTake + " of " + currentDish);
+										synchronized(dishStock) {
+											dishStock.put(currentDish, dishStock.get(currentDish).intValue()-weHaveToTake);
+										}
+										soFar.put(currentDish, weNeed);
+									}
+									else {
+										System.out.println("Taking " + currentAmountOfDish + " of " + currentDish);
+										synchronized(dishStock) {
+											dishStock.put(currentDish, dishStock.get(currentDish).intValue()-currentAmountOfDish);
+										}
+										soFar.put(currentDish, currentAmountOfDish);
+									}
+									if(soFar.equals(details)) {
+										currentOrder.setStatus("Collected");
+										untrackOrder(currentOrder);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
 	}
 
 }

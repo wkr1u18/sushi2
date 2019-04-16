@@ -14,6 +14,7 @@ public class Order extends Model {
 	private String status;
 	private User buyer;
 	private Map<Dish, Number> orderDetails = new ConcurrentHashMap<Dish, Number>();
+	private Number cost;
 	
 	public Order() {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/YYYY HH:mm:ss");  
@@ -26,6 +27,7 @@ public class Order extends Model {
 		this();
 		this.setUser(buyer);
 		this.setOrderDetails(orderDetails);
+		getCost();
 	}
 	
 	public synchronized void setUser(User buyer) {
@@ -55,17 +57,20 @@ public class Order extends Model {
 	}
 
 	public synchronized void setStatus(String status) {
-		notifyUpdate("status",this.status,status);
 		this.status = status;
+		notifyUpdate();
 	}
 	
 	public Number getCost() {
-		Double result = 0.0;
-		for(Map.Entry<Dish, Number> entry : orderDetails.entrySet()) {
-			int amount =  entry.getValue().intValue();
-			result += entry.getKey().getPrice().doubleValue() * amount;
+		if(cost==null) {
+			Double result = 0.0;
+			for(Map.Entry<Dish, Number> entry : orderDetails.entrySet()) {
+				int amount =  entry.getValue().intValue();
+				result += entry.getKey().getPrice().doubleValue() * amount;
+			}
+			cost = result;
 		}
-		return result;
+		return cost;
 	}
 	
 	public User getUser() {
@@ -75,5 +80,10 @@ public class Order extends Model {
 	public void cancelOrder() {
 		System.out.println("Cancelling order");
 	}
+	
+	public Map<Dish, Number> getOrderDetails() {
+			return orderDetails;
+	}
+	
 
 }

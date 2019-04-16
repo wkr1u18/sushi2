@@ -33,6 +33,8 @@ public class Server implements ServerInterface {
 	private Comms server;
 	
 	private void clear() {
+		stockManagement.shutdown();
+		stockManagement.getThreadInstace().stop();
 		for(Staff s : staff) {
 			s.shutdown();
 			s.getThreadInstace().stop();
@@ -42,6 +44,9 @@ public class Server implements ServerInterface {
 			d.getThreadInstace().stop();
 		}
 		stockManagement = new StockManagement(this); 
+        Thread stockManagementThread = new Thread(stockManagement);
+        stockManagement.setThreadInstance(stockManagementThread);
+        stockManagementThread.start();
 		dishes.clear();
 		drones.clear();
 		ingredients.clear();
@@ -60,6 +65,10 @@ public class Server implements ServerInterface {
         
         configuration = new Configuration(this);
         stockManagement = new StockManagement(this);
+        
+        Thread stockManagementThread = new Thread(stockManagement);
+        stockManagement.setThreadInstance(stockManagementThread);
+        stockManagementThread.start();
         
         //Default configuration, if not initialised it can cause null pointer exception in ServerWindow (title set up) - but we are not allowed to edit this
 		Postcode restaurantPostcode = new Postcode("SO17 1BJ");
@@ -199,6 +208,7 @@ public class Server implements ServerInterface {
 		Drone mock = new Drone(speed);
 		this.drones.add(mock);
 		mock.setStockManagement(stockManagement);
+		mock.setServer(this);
 		Thread newWorker = new Thread(mock);
 		mock.setThreadInstance(newWorker);
 		newWorker.start();
@@ -249,6 +259,7 @@ public class Server implements ServerInterface {
 	@Override
 	public void removeOrder(Order order) {
 		this.orders.remove(order);
+		stockManagement.untrackOrder(order);
 		this.notifyUpdate();
 	}
 	
@@ -317,7 +328,9 @@ public class Server implements ServerInterface {
 	public Order addOrder(User buyer, Map<Dish, Number> orderDetails) {
 		Order newOrder = new Order(buyer, orderDetails);
 		this.orders.add(newOrder);
+		stockManagement.trackOrder(newOrder);
 		this.notifyUpdate();
+		newOrder.addUpdateListener(server);
 		return newOrder;
 	}
 	
@@ -584,4 +597,5 @@ public class Server implements ServerInterface {
 		}
 		return null;
 	}
+
 }

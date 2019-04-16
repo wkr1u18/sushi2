@@ -2,6 +2,8 @@ package comp1206.sushi.common;
 
 import com.esotericsoftware.kryo.Kryo;
 
+import comp1206.sushi.server.Comms;
+
 public class Registration {
 
 	public static void register(Kryo kryo) {

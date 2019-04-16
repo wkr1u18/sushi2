@@ -1,6 +1,9 @@
 package comp1206.sushi.common;
 
+import com.esotericsoftware.kryonet.Server;
+
 import comp1206.sushi.common.Drone;
+import comp1206.sushi.server.ServerInterface;
 
 public class Drone extends Model implements Runnable {
 
@@ -18,6 +21,7 @@ public class Drone extends Model implements Runnable {
 	private volatile boolean shutdown = false;
 	private Thread threadInstance; 
 	private StockManagement stockManagement;
+	private ServerInterface server;
 	
 	public synchronized void setThreadInstance(Thread threadInstance) {
 		this.threadInstance = threadInstance;
@@ -25,6 +29,10 @@ public class Drone extends Model implements Runnable {
 	
 	public synchronized Thread getThreadInstace() {
 		return this.threadInstance;
+	}
+	
+	public void setServer(ServerInterface server) {
+		this.server = server;
 	}
 	
 	public void setStockManagement(StockManagement stockManagement) {
@@ -122,14 +130,28 @@ public class Drone extends Model implements Runnable {
 		this.setStatus("Idle");
 	}
 	
+	
+	public void deliverIngredient(Ingredient i) {
+		Supplier supplier = i.getSupplier();
+		Number distance = supplier.getDistance();
+		Postcode source = server.getRestaurantPostcode();
+		Postcode destination = supplier.getPostcode();
+		fly(source, destination, distance);
+		fly(destination, source, distance);
+	}
+	
+	
 	@Override
 	public void run() {
-		fly(new Postcode("SO17 1AW"), new Postcode("SO17 1BJ"), 200);
 		while(!shutdown) {
 			//If we can restock ingredient, do it
 			Ingredient nextIngredient = stockManagement.getNextIngredient();
 			if(nextIngredient!=null) {
-				System.out.println("restocking ingredient");
+				stockManagement.notifyRestocking(nextIngredient);
+				System.out.println("Restocking: " + nextIngredient);
+				deliverIngredient(nextIngredient);
+				stockManagement.restockIngredient(nextIngredient);
+				stockManagement.notifyRestockingFinished(nextIngredient);
 			}
 			
 			//If we can deliver order, do it

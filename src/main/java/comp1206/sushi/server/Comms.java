@@ -32,7 +32,7 @@ import comp1206.sushi.common.UpdateEvent;
 import comp1206.sushi.common.UpdateListener;
 import comp1206.sushi.common.User;
 
-public class Comms implements Runnable{
+public class Comms implements Runnable, UpdateListener{
 
 	public final static int WRITE_BUFER = 256 * 1024;
 	public final static int READ_BUFFER = 256 * 1024;
@@ -263,6 +263,12 @@ public class Comms implements Runnable{
 			}
 		}
 		
+		
+	}
+
+	@Override
+	public void updated(UpdateEvent updateEvent) {
+		update();
 		
 	}
 
