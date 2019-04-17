@@ -124,13 +124,9 @@ public class Server implements ServerInterface, UpdateListener {
 				o.addUpdateListener(this);
 			}	
 			this.notifyUpdate();
-		} catch(FileNotFoundException notFound) {
-			System.out.println("No persistence found - loading default configuration");
+		} catch(Exception e) {
+			System.out.println("Persistence error - loading default configuration");
 			defaultConfiguration();
-		} catch(IOException ioe) {
-			ioe.printStackTrace();
-		} catch (ClassNotFoundException cnfe) {
-			cnfe.printStackTrace();
 		}
 		
 	}

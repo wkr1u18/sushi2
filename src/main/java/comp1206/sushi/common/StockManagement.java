@@ -20,7 +20,7 @@ public class StockManagement implements Runnable, Serializable {
 	private static final long serialVersionUID = 1L;
 	private Map<Dish, Number> dishStock;
 	private Map<Ingredient,Number> ingredientStock;
-	private transient Map<Dish, Integer> dishesBeingRestocked;
+	private Map<Dish, Integer> dishesBeingRestocked;
 	private transient Map<Ingredient, Integer> ingredientsBeingRestocked;
 	private List<OrderCollector> orderCollectors;
 	private transient Thread threadInstance;
@@ -45,6 +45,27 @@ public class StockManagement implements Runnable, Serializable {
 	
 	public void initialise(ServerInterface server) {
 		this.server = server;
+		
+		synchronized(dishesBeingRestocked) {
+			for(Map.Entry<Dish, Integer> entry : dishesBeingRestocked.entrySet()) {
+				Integer amountRestocked = entry.getValue();
+				if(amountRestocked>0) {
+					Dish currentDish = entry.getKey();
+					System.out.println(currentDish + " was being made while crash");
+					Map<Ingredient, Number> recipe = currentDish.getRecipe();
+					for(Map.Entry<Ingredient, Number>recipeEntry : recipe.entrySet()) {
+						Integer amountToGiveBack = recipeEntry.getValue().intValue()*amountRestocked;
+						Ingredient ingredientToGiveBack = recipeEntry.getKey();
+						System.out.println("We need to give back: " + amountToGiveBack + " of: " + ingredientToGiveBack);
+						synchronized(ingredientStock) {
+							Integer soFar = ingredientStock.get(ingredientToGiveBack).intValue();
+							Integer newValue = soFar + amountToGiveBack;
+							ingredientStock.put(ingredientToGiveBack, newValue);
+						}
+					}
+				}
+			}
+		}
 		
 		ingredientsBeingRestocked = Collections.synchronizedMap(new HashMap<Ingredient, Integer>());
 		dishesBeingRestocked = Collections.synchronizedMap(new HashMap<Dish, Integer>());
