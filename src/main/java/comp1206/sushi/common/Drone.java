@@ -125,14 +125,48 @@ public class Drone extends Model implements Runnable, Serializable {
 		shutdown=true;
 	}
 	
-	public void fly(Postcode source, Postcode destination, Number route) {
+	public void fly(Postcode source, Postcode destination, Number route){
+		this.setSource(source);
+		this.setDestination(destination);
+		this.setStatus("Flying");
+		Integer soFar = 0;
+		while(soFar<route.intValue()) {
+			if(battery.intValue()==0) {
+				flyFrom(destination, source, soFar);
+				recharge();
+				soFar=0;
+				this.setSource(source);
+				this.setDestination(destination);
+			}
+			try {
+				Thread.sleep(100);
+				
+			} catch (InterruptedException ie) {
+				
+			}
+			Integer newBattery= battery.intValue() - generator.nextInt(2);
+			if(newBattery<0) {
+				newBattery=0;
+			}
+			battery = newBattery;
+			soFar += this.getSpeed().intValue();
+			int progress = Math.round(soFar*100/route.intValue());
+			if(progress>100) {
+				progress=100;
+			}
+			this.setProgress(progress);
+		}
+		this.setStatus("Idle");
+	}
+	
+	public void flyFrom(Postcode source, Postcode destination, Number route) {
 		this.setSource(source);
 		this.setDestination(destination);
 		this.setStatus("Flying");
 		Integer soFar = 0;
 		while(soFar<route.intValue()) {
 			try {
-				Thread.sleep(100);
+				Thread.sleep(1000);
 				
 			} catch (InterruptedException ie) {
 				
@@ -156,8 +190,10 @@ public class Drone extends Model implements Runnable, Serializable {
 		Postcode source = server.getRestaurantPostcode();
 		Postcode destination = o.getUser().getPostcode();
 		Number distance = o.getDistance();
+
 		fly(source, destination, distance);
-		fly(destination, source, distance);
+
+		flyFrom(destination, source, distance);
 	}
 	
 	
@@ -167,14 +203,16 @@ public class Drone extends Model implements Runnable, Serializable {
 		Postcode source = server.getRestaurantPostcode();
 		Postcode destination = supplier.getPostcode();
 		fly(source, destination, distance);
-		fly(destination, source, distance);
+		flyFrom(destination, source, distance);
 	}
 	
 	
 	@Override
 	public void run() {
 		while(!shutdown) {
-			//If we can restock ingredient, do it
+			if(battery.intValue()==0) {
+				recharge();
+			}
 			Ingredient nextIngredient = stockManagement.getNextIngredient();
 			if(nextIngredient!=null) {
 				stockManagement.notifyRestocking(nextIngredient);
@@ -204,6 +242,23 @@ public class Drone extends Model implements Runnable, Serializable {
 		generator = new Random();
 		source = null;
 		destination = null;
+		status="Idle";
+	}
+	
+	public void recharge() {
+		status = "Charging";
+		while(battery.intValue()<100) {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException ie) {
+				
+			}
+			battery=battery.intValue()+generator.nextInt(20);
+		}
+		if(battery.intValue()>100) {
+			battery=100;
+		}
+		
 		status="Idle";
 	}
 	
