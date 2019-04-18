@@ -96,12 +96,21 @@ public class Server implements ServerInterface, UpdateListener {
 			this.suppliers = persistence.getSuppliers();
 			this.ingredients = persistence.getIngredients();
 			this.dishes = persistence.getDishes();
-			this.stockManagement = persistence.getStockManagement();
-			this.stockManagement.initialise(this);
 			this.users = persistence.getUsers();
 			this.orders = persistence.getOrders();
+			this.stockManagement = persistence.getStockManagement();
+			this.stockManagement.initialise(this);
+			
 			this.drones = persistence.getDrones();
 			this.staff = persistence.getStaff();
+			
+			Thread stockManagementThread = new Thread(stockManagement);
+			stockManagement.setThreadInstance(stockManagementThread);
+			stockManagementThread.start();
+			
+			for(Order o : orders) {
+				o.addUpdateListener(this);
+			}	
 			for(Drone d : drones) {
 				d.setServer(this);
 				d.setStockManagement(stockManagement);
@@ -116,13 +125,6 @@ public class Server implements ServerInterface, UpdateListener {
 				s.setThreadInstance(newWorker);
 				newWorker.start();
 			}
-			
-			Thread stockManagementThread = new Thread(stockManagement);
-			stockManagement.setThreadInstance(stockManagementThread);
-			stockManagementThread.start();
-			for(Order o : orders) {
-				o.addUpdateListener(this);
-			}	
 			this.notifyUpdate();
 		} catch(Exception e) {
 			System.out.println("Persistence error - loading default configuration");
@@ -525,7 +527,7 @@ public class Server implements ServerInterface, UpdateListener {
 	}
 	
 	@Override
-	public void notifyUpdate() {
+	public synchronized void notifyUpdate() {
 		try {
 			this.listeners.forEach(listener -> listener.updated(new UpdateEvent()));
 		} catch (NullPointerException npe) {

@@ -11,6 +11,12 @@ public class OrderCollector implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private Order order;
 	private Map<Dish, Number> soFar;
+	private volatile boolean isComplete = false;
+	
+	public boolean isComplete() {
+		return this.isComplete;
+	}
+	
 	public OrderCollector(Order order) {
 		this.order = order;
 		this.soFar = new ConcurrentHashMap<Dish, Number>();
@@ -29,7 +35,7 @@ public class OrderCollector implements Serializable {
 	}
 	
 	public void notifyCollected() {
-		this.order.setStatus("Collected");
+		isComplete = true;
 	}
 
 }

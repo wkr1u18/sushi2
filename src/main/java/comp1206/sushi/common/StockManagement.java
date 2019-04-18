@@ -45,6 +45,36 @@ public class StockManagement implements Runnable, Serializable {
 	
 	public void initialise(ServerInterface server) {
 		this.server = server;
+
+		dishStock = Collections.synchronizedMap(dishStock);
+		ingredientStock = Collections.synchronizedMap(ingredientStock);
+		
+		synchronized(orderCollectors) {
+			for(OrderCollector oc : orderCollectors) {
+				if(oc.getOrder().getStatus().equals("Placed")) {
+					Map<Dish, Number> orderDetails = oc.getCollectedSoFar();
+					for(Map.Entry<Dish, Number> entry : orderDetails.entrySet()) {
+						Integer amount = entry.getValue().intValue();
+						Dish whatDish = entry.getKey();
+						if(amount>0) {
+							System.out.println(amount + " of " + whatDish + " was stored in order collector");
+							synchronized(dishStock) {
+								Integer currentDishAmount = dishStock.get(whatDish).intValue();
+								Integer newValue = currentDishAmount + amount;
+								dishStock.put(whatDish, newValue);
+							}
+						}
+					}
+				}
+			}
+			orderCollectors.clear();
+		}
+		System.out.println(server.getOrders().size() + "Orders placed so far");
+		for(Order o : server.getOrders()) {
+			if(o.getStatus().equals("Placed")) {
+				trackOrder(o);
+			}
+		}
 		
 		synchronized(dishesBeingRestocked) {
 			for(Map.Entry<Dish, Integer> entry : dishesBeingRestocked.entrySet()) {
@@ -104,6 +134,7 @@ public class StockManagement implements Runnable, Serializable {
 	}
 	
 	public void untrackOrder(Order o ) {
+		System.out.println("Untracking order");
 		OrderCollector orderCollector = getOrderCollector(o);
 		synchronized(orderCollectors) {
 			orderCollectors.remove(orderCollector);
@@ -138,12 +169,16 @@ public class StockManagement implements Runnable, Serializable {
 		}
 	}
 	
-	public synchronized Map<Dish,Number> getDishStockLevels() {
-		return dishStock;
+	public Map<Dish,Number> getDishStockLevels() {
+		synchronized(dishStock) {
+			return dishStock;
+		}
 	}
 	
-	public synchronized Map<Ingredient, Number> getIngredientStockLevels() {
-		return ingredientStock;
+	public Map<Ingredient, Number> getIngredientStockLevels() {
+		synchronized(ingredientStock) {
+			return ingredientStock;
+		}
 	}
 	
 	public void remove(Dish d) {
@@ -349,7 +384,9 @@ public class StockManagement implements Runnable, Serializable {
 
 	@Override
 	public void run() {
+		
 		while(!shutdown) {
+			
 			synchronized(orderCollectors) {
 				for(OrderCollector oc : orderCollectors) {
 					Order currentOrder = oc.getOrder();
@@ -358,6 +395,7 @@ public class StockManagement implements Runnable, Serializable {
 						Map<Dish, Number> soFar = oc.getCollectedSoFar();
 						for(Map.Entry<Dish, Number> entry : details.entrySet()) {
 							Dish currentDish = entry.getKey();
+							
 							Integer weNeed = entry.getValue().intValue();
 							Integer weHaveCollected = soFar.get(entry.getKey()).intValue();
 							Integer weHaveToTake = weNeed - weHaveCollected;
@@ -368,23 +406,33 @@ public class StockManagement implements Runnable, Serializable {
 								}
 								if(currentAmountOfDish>0) {
 									if(currentAmountOfDish>=weHaveToTake) {
+										System.out.println("We have enough - no need to put more of this dish");
 										System.out.println("Taking " + weHaveToTake + " of " + currentDish);
 										synchronized(dishStock) {
 											dishStock.put(currentDish, dishStock.get(currentDish).intValue()-weHaveToTake);
 										}
 										soFar.put(currentDish, weNeed);
+										server.notifyUpdate();
 									}
 									else {
+										System.out.println("Too few too fill at once, taking only few");
 										System.out.println("Taking " + currentAmountOfDish + " of " + currentDish);
 										synchronized(dishStock) {
 											dishStock.put(currentDish, dishStock.get(currentDish).intValue()-currentAmountOfDish);
 										}
 										soFar.put(currentDish, currentAmountOfDish);
 									}
-									if(soFar.equals(details)) {
-										currentOrder.setStatus("Collected");
-										//untrackOrder(currentOrder);
-									}
+									//this was here
+								}
+							}
+							if(weHaveToTake==0) {
+								//Now it is here
+								if(soFar.equals(details)) {
+									System.out.println("Done, now setting status");
+									currentOrder.setStatus("Collected");
+								} else {
+									System.out.println("Collected so far: " + soFar);
+									System.out.println("We need: " + details);
 								}
 							}
 						}

@@ -22,7 +22,7 @@ DISH:Side Rice:Side portion of rice:5:4:1:500 * Rice
 
 USER:Admin:password:University Road:SO17 1BJ
 
-ORDER:Admin:1 * Sushi Roll
+ORDER:Admin:2 * Sushi Roll
 
 STOCK:Sushi Roll:0
 STOCK:Vinegar:60
