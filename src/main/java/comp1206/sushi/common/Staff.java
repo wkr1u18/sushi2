@@ -78,7 +78,7 @@ public class Staff extends Model implements Runnable{
 					this.setStatus("Restocking " + nextDish.getName());
 					System.out.println(this.getName() + " is restocking " + nextDish.getName());
 					try {
-						Thread.sleep((generator.nextInt(40)+20)*100);
+						Thread.sleep((generator.nextInt(40)+20)*1000);
 					} catch (InterruptedException ie) {
 						
 					}

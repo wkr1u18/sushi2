@@ -46,30 +46,9 @@ public class StockManagement implements Runnable, Serializable {
 	public void initialise(ServerInterface server) {
 		this.server = server;
 
-		dishStock = Collections.synchronizedMap(dishStock);
-		ingredientStock = Collections.synchronizedMap(ingredientStock);
-		
-		synchronized(orderCollectors) {
-			for(OrderCollector oc : orderCollectors) {
-				if(oc.getOrder().getStatus().equals("Placed")) {
-					Map<Dish, Number> orderDetails = oc.getCollectedSoFar();
-					for(Map.Entry<Dish, Number> entry : orderDetails.entrySet()) {
-						Integer amount = entry.getValue().intValue();
-						Dish whatDish = entry.getKey();
-						if(amount>0) {
-							System.out.println(amount + " of " + whatDish + " was stored in order collector");
-							synchronized(dishStock) {
-								Integer currentDishAmount = dishStock.get(whatDish).intValue();
-								Integer newValue = currentDishAmount + amount;
-								dishStock.put(whatDish, newValue);
-							}
-						}
-					}
-				}
-			}
-			orderCollectors.clear();
-		}
-		System.out.println(server.getOrders().size() + "Orders placed so far");
+//		dishStock = Collections.synchronizedMap(dishStock);
+//		ingredientStock = Collections.synchronizedMap(ingredientStock);
+
 		for(Order o : server.getOrders()) {
 			if(o.getStatus().equals("Placed")) {
 				trackOrder(o);
