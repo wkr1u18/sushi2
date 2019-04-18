@@ -2,6 +2,7 @@ package comp1206.sushi.common;
 
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.Random;
 
 import com.esotericsoftware.kryonet.Server;
 
@@ -20,6 +21,7 @@ public class Drone extends Model implements Runnable, Serializable {
 	private Number capacity;
 	private Number battery;
 	
+	private transient Random generator;
 	private transient String status;
 	
 	private transient Postcode source;
@@ -53,6 +55,7 @@ public class Drone extends Model implements Runnable, Serializable {
 		this.setCapacity(1);
 		this.setBattery(100);
 		this.setStatus("Idle");
+		generator = new Random();
 	}
 
 	public Number getSpeed() {
@@ -129,10 +132,16 @@ public class Drone extends Model implements Runnable, Serializable {
 		Integer soFar = 0;
 		while(soFar<route.intValue()) {
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(100);
+				
 			} catch (InterruptedException ie) {
 				
 			}
+			Integer newBattery= battery.intValue() - generator.nextInt(2);
+			if(newBattery<0) {
+				newBattery=0;
+			}
+			battery = newBattery;
 			soFar += this.getSpeed().intValue();
 			int progress = Math.round(soFar*100/route.intValue());
 			if(progress>100) {
@@ -192,6 +201,9 @@ public class Drone extends Model implements Runnable, Serializable {
 	}
 	private void readObject(ObjectInputStream in) throws Exception {
 		in.defaultReadObject();
+		generator = new Random();
+		source = null;
+		destination = null;
 		status="Idle";
 	}
 	

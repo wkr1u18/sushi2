@@ -391,7 +391,6 @@ public class StockManagement implements Runnable, Serializable {
 											dishStock.put(currentDish, dishStock.get(currentDish).intValue()-weHaveToTake);
 										}
 										soFar.put(currentDish, weNeed);
-										server.notifyUpdate();
 									}
 									else {
 										System.out.println("Too few too fill at once, taking only few");
@@ -401,7 +400,7 @@ public class StockManagement implements Runnable, Serializable {
 										}
 										soFar.put(currentDish, currentAmountOfDish);
 									}
-									//this was here
+									server.notifyUpdate();
 								}
 							}
 							if(weHaveToTake==0) {
