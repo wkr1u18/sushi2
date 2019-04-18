@@ -67,12 +67,32 @@ public class Staff extends Model implements Runnable{
 		this.stockManagement = stockManagement;
 	}
 	
+	public void rest() {
+		status = "Resting";
+		while(fatigue.intValue()>0) {
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException ie) {
+				
+			}
+			fatigue = fatigue.intValue()-generator.nextInt(5);
+			if(fatigue.intValue()<0) {
+				fatigue=0;
+			}
+		}
+
+		
+		status="Idle";
+	}
+	
 	
 	@Override
 	public void run() {
 		while(!shutdown) {
 			Dish nextDish = stockManagement.getNextDish();
-			
+				if(fatigue.intValue()==100) {
+					rest();
+				}
 				if(nextDish!=null) {
 					stockManagement.notifyRestocking(nextDish);
 					this.setStatus("Restocking " + nextDish.getName());
@@ -81,6 +101,10 @@ public class Staff extends Model implements Runnable{
 						Thread.sleep((generator.nextInt(40)+20)*1000);
 					} catch (InterruptedException ie) {
 						
+					}
+					fatigue = fatigue.intValue()+generator.nextInt(20);
+					if(fatigue.intValue()>100) {
+						fatigue=100;
 					}
 					stockManagement.notifyRestockingFinished(nextDish);
 					stockManagement.makeDish(nextDish);

@@ -254,11 +254,10 @@ public class Drone extends Model implements Runnable, Serializable {
 				
 			}
 			battery=battery.intValue()+generator.nextInt(20);
+			if(battery.intValue()>100) {
+				battery=100;
+			}
 		}
-		if(battery.intValue()>100) {
-			battery=100;
-		}
-		
 		status="Idle";
 	}
 	
