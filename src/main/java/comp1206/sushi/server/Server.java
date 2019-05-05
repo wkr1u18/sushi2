@@ -388,6 +388,11 @@ public class Server implements ServerInterface, UpdateListener {
 	@Override
 	public Postcode addPostcode(String code) {
 		Postcode mock = new Postcode(code, restaurant);
+		for(Postcode p : this.getPostcodes()) {
+			if(p.getName().equals(mock.getName())) {
+				return p;
+			}
+		}
 		this.postcodes.add(mock);
 		this.notifyUpdate();
 		return mock;
