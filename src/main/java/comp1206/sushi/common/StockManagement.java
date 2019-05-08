@@ -223,7 +223,7 @@ public class StockManagement implements Runnable, Serializable {
 		Integer prognosedAmount = 0;
 		Integer currentStock = 0;
 		Integer amount = 0;
-		synchronized(dishStock) {
+		synchronized(dishStock) {	
 			currentStock = (Integer) dishStock.get(d);
 		}
 		synchronized(dishesBeingRestocked) {
@@ -235,6 +235,9 @@ public class StockManagement implements Runnable, Serializable {
 		
 		if(prognosedAmount<(Integer) d.getRestockThreshold()) {
 			Map<Ingredient, Number> recipe = d.getRecipe();
+			if(recipe==null) {
+				return null;
+			}
 			//Iterate through recipe to check whether we have enough elements 
 			for(Map.Entry<Ingredient, Number> entry : recipe.entrySet()) {
 				synchronized(ingredientStock) {

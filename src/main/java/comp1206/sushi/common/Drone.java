@@ -156,6 +156,13 @@ public class Drone extends Model implements Runnable, Serializable {
 			}
 			this.setProgress(progress);
 		}
+		setIdle();
+	}
+	
+	private void setIdle() {
+		source=null;
+		destination=null;
+		progress=null;
 		this.setStatus("Idle");
 	}
 	
@@ -183,7 +190,7 @@ public class Drone extends Model implements Runnable, Serializable {
 			}
 			this.setProgress(progress);
 		}
-		this.setStatus("Idle");
+		setIdle();
 	}
 	
 	public void deliverOrder(Order o) {
@@ -232,7 +239,7 @@ public class Drone extends Model implements Runnable, Serializable {
 			}
 			
 			//Otherwise, do nothing and wait
-			this.setStatus("Idle");
+			setIdle();
 
 		}
 		
@@ -258,7 +265,7 @@ public class Drone extends Model implements Runnable, Serializable {
 				battery=100;
 			}
 		}
-		status="Idle";
+		setIdle();
 	}
 	
 }
