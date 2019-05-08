@@ -46,6 +46,9 @@ public class CommsClient implements Runnable {
 	private AtomicBoolean isBasketReady = new AtomicBoolean(true);
 	private Client client;
 	private Listener listener;
+	private Object dishesLock = new Object();
+	private Object ordersLock = new Object();
+	private Object basketLock = new Object();
 	
 	public CommsClient(ClientInterface clientInterface) {
 		this.clientInterface = clientInterface;
@@ -78,29 +81,35 @@ public class CommsClient implements Runnable {
 				MessageWithAttachement msg = (MessageWithAttachement) object;
 				switch(msg.toString()) {
 				case "BASKET":
-					if(basket!=null) {
-						basket = (Basket) msg.getAttachement();
-						clientInterface.notifyUpdate();
-					} else {
-						basket = (Basket) msg.getAttachement();
-						
+					synchronized(basketLock) {
+						if(basket!=null) {
+							basket = (Basket) msg.getAttachement();
+							clientInterface.notifyUpdate();
+						} else {
+							basket = (Basket) msg.getAttachement();
+							
+						}	
 					}
 					break;
 				case "DISHES":
-					if(dishes==null) {
-						dishes  = (List<Dish>) msg.getAttachement();
-					} else {
-						dishes  = (List<Dish>) msg.getAttachement();
-						clientInterface.notifyUpdate();
+					synchronized(dishesLock) {
+						if(dishes==null) {
+							dishes  = (List<Dish>) msg.getAttachement();
+						} else {
+							dishes  = (List<Dish>) msg.getAttachement();
+							clientInterface.notifyUpdate();
+						}
 					}
 					break;
 				case "ORDERS":
-					if(orders!=null) {
-						orders = (List<Order>) msg.getAttachement();
-						clientInterface.notifyUpdate();
-					}
-					else {
-						orders = (List<Order>) msg.getAttachement();
+					synchronized(ordersLock) {
+						if(orders!=null) {
+							orders = (List<Order>) msg.getAttachement();
+							clientInterface.notifyUpdate();
+						}
+						else {
+							orders = (List<Order>) msg.getAttachement();
+						}	
 					}
 					break;
 				case "POSTCODES":
@@ -122,15 +131,21 @@ public class CommsClient implements Runnable {
 	}
 	
 	public List<Order> getOrders() {
-		return orders;
+		synchronized(ordersLock) {
+			return orders;
+		}
 	}
 	
 	public Basket getBasket() {
-		return basket;
+		synchronized(basketLock) {
+			return basket;	
+		}
 	}
 	
 	public List<Dish> getDishes() {
-		return dishes;
+		synchronized(dishesLock) {
+			return dishes;
+		}
 	}
 	
 	public List<Postcode> getPostcodes() {

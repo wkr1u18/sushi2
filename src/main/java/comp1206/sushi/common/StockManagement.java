@@ -25,6 +25,9 @@ public class StockManagement implements Runnable, Serializable {
 	private List<OrderCollector> orderCollectors;
 	private transient Thread threadInstance;
 	private volatile boolean shutdown = false;
+	private Object dishLock = new Object();
+	private Object ingredientLock = new Object();
+	
 	
 	
 	private transient ServerInterface server;
@@ -164,11 +167,17 @@ public class StockManagement implements Runnable, Serializable {
 		synchronized(dishStock) {
 			dishStock.remove(d);
 		}
+		synchronized(dishesBeingRestocked) {
+			dishesBeingRestocked.remove(d);
+		}
 	}
 	
 	public void remove(Ingredient i) {
 		synchronized(ingredientStock) {
 			ingredientStock.remove(i);
+		}
+		synchronized(ingredientsBeingRestocked) {
+			ingredientsBeingRestocked.remove(i);
 		}
 	}
 	
@@ -274,7 +283,12 @@ public class StockManagement implements Runnable, Serializable {
 		}
 		List<Dish> dishes = server.getDishes();
 		for(Dish d : dishes) {
-			Dish result = checkDish(d);
+			Dish result;
+			try {
+				result = checkDish(d);
+			} catch (NullPointerException npe) {
+				result=null;
+			}
 			if(result!=null) {
 				return result;
 			}

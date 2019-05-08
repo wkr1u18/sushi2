@@ -58,12 +58,14 @@ public class Client implements ClientInterface {
 	
 	@Override
 	public Restaurant getRestaurant() {
+
 		if(restaurant==null) {
 			commsClient.sendMessage("GET-RESTAURANT");
 			while(restaurant==null) {
 				restaurant=commsClient.getRestaurant();
 			}
 		}
+
 		return restaurant;
 	}
 	
@@ -122,13 +124,15 @@ public class Client implements ClientInterface {
 	}
 
 	@Override
-	public List<Dish> getDishes() {
+	public synchronized List<Dish> getDishes() {
+
 		if(dishes==null) {
 			commsClient.sendMessage("GET-DISHES");
 			while(dishes==null) {
 				dishes = commsClient.getDishes();
 			}
 		} else {
+
 			dishes=commsClient.getDishes();
 		}
 		return dishes;
@@ -203,7 +207,9 @@ public class Client implements ClientInterface {
 
 	@Override
 	public synchronized List<Order> getOrders(User user) {
+
 		orders = commsClient.getOrders();
+
 		return orders;
 	}
 

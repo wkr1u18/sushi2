@@ -169,8 +169,8 @@ public class Server implements ServerInterface, UpdateListener {
 		if(stockManagement.isDishBeingRestocked(dish)) {
 			throw new UnableToDeleteException("Cannot delete dish which is currently being restocked");
 		}
-		this.dishes.remove(dish);
 		stockManagement.remove(dish);
+		this.dishes.remove(dish);
 		this.notifyUpdate();
 	}
 

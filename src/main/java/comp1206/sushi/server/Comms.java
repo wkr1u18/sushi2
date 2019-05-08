@@ -81,6 +81,7 @@ public class Comms implements Runnable{
 	
 	public synchronized void sendDishes(int connectionID) {
 		MessageWithAttachement msg = makeDishesMessage();
+		System.out.println("Sending dishes");
 		sendMessageTo(msg, connectionID);
 	}
 	
