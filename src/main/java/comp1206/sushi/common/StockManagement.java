@@ -25,8 +25,6 @@ public class StockManagement implements Runnable, Serializable {
 	private List<OrderCollector> orderCollectors;
 	private transient Thread threadInstance;
 	private volatile boolean shutdown = false;
-	private Object dishLock = new Object();
-	private Object ingredientLock = new Object();
 	
 	
 	

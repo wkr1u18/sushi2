@@ -89,30 +89,36 @@ public class Staff extends Model implements Runnable{
 	@Override
 	public void run() {
 		while(!shutdown) {
-			Dish nextDish = stockManagement.getNextDish();
-				if(fatigue.intValue()==100) {
-					rest();
+			Dish nextDish;
+			try {
+				nextDish = stockManagement.getNextDish();
+			}
+			catch(NullPointerException npe) {
+				nextDish=null;
+			}
+			if(fatigue.intValue()==100) {
+				rest();
+			}
+			if(nextDish!=null) {
+				stockManagement.notifyRestocking(nextDish);
+				this.setStatus("Restocking " + nextDish.getName());
+				System.out.println(this.getName() + " is restocking " + nextDish.getName());
+				try {
+					Thread.sleep((generator.nextInt(40)+20)*1000);
+				} catch (InterruptedException ie) {
+
 				}
-				if(nextDish!=null) {
-					stockManagement.notifyRestocking(nextDish);
-					this.setStatus("Restocking " + nextDish.getName());
-					System.out.println(this.getName() + " is restocking " + nextDish.getName());
-					try {
-						Thread.sleep((generator.nextInt(40)+20)*1000);
-					} catch (InterruptedException ie) {
-						
-					}
-					fatigue = fatigue.intValue()+generator.nextInt(20);
-					if(fatigue.intValue()>100) {
-						fatigue=100;
-					}
-					stockManagement.notifyRestockingFinished(nextDish);
-					stockManagement.makeDish(nextDish);
-					
+				fatigue = fatigue.intValue()+generator.nextInt(20);
+				if(fatigue.intValue()>100) {
+					fatigue=100;
 				}
-				else {
-					this.setStatus("Idle");
-				}
+				stockManagement.notifyRestockingFinished(nextDish);
+				stockManagement.makeDish(nextDish);
+
+			}
+			else {
+				this.setStatus("Idle");
+			}
 
 		}
 	}

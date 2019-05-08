@@ -220,7 +220,14 @@ public class Drone extends Model implements Runnable, Serializable {
 			if(battery.intValue()==0) {
 				recharge();
 			}
-			Ingredient nextIngredient = stockManagement.getNextIngredient();
+			Ingredient nextIngredient ;
+			try {
+				nextIngredient = stockManagement.getNextIngredient();
+			}
+			catch (NullPointerException npe) {
+				nextIngredient=null;
+			}
+			
 			if(nextIngredient!=null) {
 				stockManagement.notifyRestocking(nextIngredient);
 				System.out.println("Restocking: " + nextIngredient);
@@ -230,7 +237,13 @@ public class Drone extends Model implements Runnable, Serializable {
 			}
 			
 			//If we can deliver order, do it
-			Order nextOrder = stockManagement.getNextOrder();
+			Order nextOrder;
+			try {
+				nextOrder = stockManagement.getNextOrder();
+			}
+			catch(NullPointerException npe) {
+				nextOrder=null;
+			}
 			if(nextOrder!=null)
 			{
 				deliverOrder(nextOrder);
