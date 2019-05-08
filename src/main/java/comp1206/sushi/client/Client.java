@@ -40,12 +40,20 @@ public class Client implements ClientInterface {
 
 	public Client() {
         logger.info("Starting up client...");
+        try {
+        	Thread.sleep(500);
+        } catch (InterruptedException ie) {
+        	ie.printStackTrace();
+        }
         commsClient = new CommsClient(this);
         Thread clientThread = new Thread(commsClient);
         clientThread.setName("Client");
         clientThread.setDaemon(true);
         clientThread.start();
-        this.notifyUpdate();
+        //this.notifyUpdate();
+        while(!commsClient.isReady()) {
+        	
+        }
 	}
 	
 	@Override

@@ -42,6 +42,7 @@ public class CommsClient implements Runnable {
 	private Restaurant restaurant;
 	private AtomicBoolean isUserReady = new AtomicBoolean(false);
 	private AtomicBoolean ready = new AtomicBoolean(false);
+	private AtomicBoolean restart = new AtomicBoolean(false);
 	private AtomicBoolean isBasketReady = new AtomicBoolean(true);
 	private Client client;
 	private Listener listener;
@@ -59,16 +60,16 @@ public class CommsClient implements Runnable {
 		Registration.register(client.getKryo());
 		client.start();
 		client.addListener(listener);
-		
 		try {
 			client.connect(TIMEOUT, HOST, PORT_TCP, PORT_UDP);
 			ready.set(true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
 
 	}
+	
+
 	
 	class ClientListener extends Listener {
 		@Override
@@ -155,6 +156,10 @@ public class CommsClient implements Runnable {
 	
 	public boolean isReady() {
 		return ready.get();
+	}
+	
+	public boolean isRestart() {
+		return restart.get();
 	}
 	
 	public boolean isUserReady() {
