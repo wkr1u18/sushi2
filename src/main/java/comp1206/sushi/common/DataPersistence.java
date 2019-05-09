@@ -5,7 +5,7 @@ import java.util.List;
 
 import comp1206.sushi.server.ServerInterface;
 
-public class Persistence implements Serializable{
+public class DataPersistence implements Serializable{
 	
 	/**
 	 * 
@@ -25,7 +25,7 @@ public class Persistence implements Serializable{
 	private List<Drone> drones;
 	private List<Staff> staff;
 	
-	public Persistence(ServerInterface server) {
+	public DataPersistence(ServerInterface server) {
 		this.server = server;
 		restaurant = server.getRestaurant();
 		postcodes = server.getPostcodes();

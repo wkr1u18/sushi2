@@ -90,7 +90,7 @@ public class Server implements ServerInterface, UpdateListener {
 			ois = new ObjectInputStream(fis);
 			System.out.println("Persistence found, loading...");
 			
-			Persistence persistence = (Persistence) ois.readObject();
+			DataPersistence persistence = (DataPersistence) ois.readObject();
 			this.restaurant = persistence.getRestaurant();
 			this.postcodes = persistence.getPostcodes();
 			this.suppliers = persistence.getSuppliers();
@@ -712,7 +712,7 @@ public class Server implements ServerInterface, UpdateListener {
 			oos = new ObjectOutputStream(fos);
 	
 			
-			Persistence newPersistence = new Persistence(this);
+			DataPersistence newPersistence = new DataPersistence(this);
 			newPersistence.setStockManagement(stockManagement);
 			oos.writeObject(newPersistence);
 			
